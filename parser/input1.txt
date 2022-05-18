@@ -1,0 +1,36 @@
+class main
+{
+	val d = "ni hau\n"
+	val e = -(2 + 3 + -4)
+	fun add(a:int, b:int): int
+	{
+		var output = 0
+    var i
+    var j
+		for (i in 1 .. 6)
+		{
+			for (j in 1 .. 6)
+			{
+				output = 1
+			}
+		}
+		return (output + a) * b
+	}
+	
+	fun main()
+	{
+		val a = 23.2
+		//var b:int = d
+    val q = 1 
+		val aaa = 12.1 + ((-123.4) * 333.4)
+		add(1, 2)
+
+		while (a)
+		{
+			for (q in 2 .. 3){
+				print("q")}
+		}
+		var k:int [20]
+		print("Hello world""")
+	}
+}

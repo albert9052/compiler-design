@@ -1,0 +1,88 @@
+
+
+fun main() {
+    //2.1.1 constants
+    val a:string = "Hey There"
+    val b = -25
+    val c = 3.14
+    val d:bool = true
+    //2.1.2 var
+    var e:string
+    var f  = -25
+    var g:float
+    var h :bool = false
+    // array
+    var i: integer [10]
+    var j: boolean [5] 
+    var k: float [100]
+    //2.2 program unit
+    class example
+    {
+     
+    }
+
+    fun correct(y: int , z: int) : int
+   {
+
+      return b+c
+   }
+    fun fun2():int
+   {
+
+
+   }
+    //2.3.1
+    f= 1
+    i[5] = 1
+    print c
+    print (c)
+    println (c)
+    println (c)
+    read c
+
+    return 
+    return c
+
+    //expressions
+
+ 
+    //function invocation
+    
+   //function invocation
+    correct(1,20,4,2345)
+    
+    
+    //block
+
+    //2.3.3condition
+    if(f!=10)
+    {
+      print c
+      print (c)
+    }
+    if(f==10)
+    {
+      print c
+    print (c)
+    }else
+    {
+
+
+    }
+    //2.3.4 loop
+    for(f in 1 .. 6)
+    {
+         f = -f 
+       f = -f
+
+
+    }
+
+    while( f == 1 & f==2 | !d )
+    {
+
+      f = -f 
+       f = -f
+
+    }
+}

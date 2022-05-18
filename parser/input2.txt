@@ -1,0 +1,36 @@
+/*
+ * Example with Functions
+ */
+ 
+  // function declaration
+
+
+def add (a: int, b: int): int 
+{
+   return 3
+}
+
+fun example {
+
+
+
+  def main()
+  {
+    var c:int
+    
+    c = c - c
+    val zz:string = "xxx"
+    c = add(1, 10)
+    if (c > 10){
+      print -c}
+    else{
+      print c
+      }
+    println ("Hello World")
+
+    
+  }
+
+  val x = 4
+
+}
