@@ -641,16 +641,16 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   116,   116,   116,   125,   134,   135,   136,   137,   140,
-     155,   171,   182,   200,   200,   231,   231,   253,   253,   276,
-     276,   292,   295,   320,   331,   332,   335,   338,   341,   346,
-     347,   348,   349,   350,   351,   354,   364,   380,   381,   382,
-     389,   390,   393,   396,   411,   414,   419,   422,   425,   430,
-     433,   448,   451,   456,   459,   462,   467,   468,   469,   470,
-     471,   472,   473,   474,   475,   476,   477,   478,   479,   482,
-     485,   495,   504,   509,   512,   527,   570,   595,   613,   623,
-     643,   649,   657,   663,   663,   679,   679,   686,   686,   695,
-     698,   701,   706,   707,   708,   709
+       0,   116,   116,   116,   132,   138,   139,   140,   141,   144,
+     159,   175,   186,   204,   204,   235,   235,   257,   257,   280,
+     280,   296,   299,   324,   335,   336,   339,   342,   345,   350,
+     351,   352,   353,   354,   355,   358,   368,   384,   385,   386,
+     393,   394,   397,   400,   415,   418,   423,   426,   429,   434,
+     437,   452,   455,   460,   463,   466,   471,   472,   473,   474,
+     475,   476,   477,   478,   479,   480,   481,   482,   483,   486,
+     489,   499,   508,   513,   516,   531,   574,   599,   617,   627,
+     647,   653,   661,   667,   667,   683,   683,   690,   690,   699,
+     702,   705,   710,   711,   712,   713
 };
 #endif
 
@@ -1627,25 +1627,29 @@ yyreduce:
 #line 119 "d.y"
                                               {
 				// Pop a symbol table before leaving the classBlock
+				TableNode* tableNode = lookUpInThisScope("main");
+				if (tableNode == NULL) {
+					yyerror("Missing \"main\" function");
+				}
+				else if (tableNode -> type != NODE_FUNCTION_WITH_NO_RETURN_VALUE && tableNode -> type != NODE_FUNCTION_WITH_RETURN_VALUE) {
+					yyerror("\"main\" is not a function");
+				}
 				popTable();
 			 }
-#line 1633 "y.tab.c"
+#line 1640 "y.tab.c"
     break;
 
   case 4:
-#line 125 "d.y"
+#line 132 "d.y"
                                                                     { 
 							 	// Insert the class identifier into the current symbol table
-								if (strcmp((yyvsp[0].identifierName), "main") != 0) {
-									yyerror("A program needs a class \"main\"");
-								}
 								insert((yyvsp[0].identifierName), NODE_CLASS, -1, NULL, 0, 0); 
 							 }
-#line 1645 "y.tab.c"
+#line 1649 "y.tab.c"
     break;
 
   case 9:
-#line 140 "d.y"
+#line 144 "d.y"
                                                                                              {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-1].identifierName)) != NULL) {
@@ -1661,11 +1665,11 @@ yyreduce:
 											}
 										}
 									 }
-#line 1665 "y.tab.c"
+#line 1669 "y.tab.c"
     break;
 
   case 10:
-#line 155 "d.y"
+#line 159 "d.y"
                                                                                                                       {
 									 	// Check if there's a type definition. If not, its type is recognized from constantExpression
 									 	if ((yyvsp[-2].intValue) == -1) {
@@ -1682,11 +1686,11 @@ yyreduce:
 											insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 0);
 										}
 									 }
-#line 1686 "y.tab.c"
+#line 1690 "y.tab.c"
     break;
 
   case 11:
-#line 171 "d.y"
+#line 175 "d.y"
                                                                                                                    {
 									 	// Check if there's already an identical identifier name in the current symbol table
 										if (lookUpInThisScope((yyvsp[-5].identifierName)) != NULL) {
@@ -1696,11 +1700,11 @@ yyreduce:
 											insert((yyvsp[-5].identifierName), NODE_ARRAY, (yyvsp[-3].intValue), NULL, 0, 0);
 										}
 									 }
-#line 1700 "y.tab.c"
+#line 1704 "y.tab.c"
     break;
 
   case 12:
-#line 182 "d.y"
+#line 186 "d.y"
                                                                                                                     {
 									 	// Check if there's a type definition. If not, its type is recognized from constantExpression
 									 	if ((yyvsp[-2].intValue) == -1) {
@@ -1717,11 +1721,11 @@ yyreduce:
 											insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 1);
 										}
 									 }
-#line 1721 "y.tab.c"
+#line 1725 "y.tab.c"
     break;
 
   case 13:
-#line 200 "d.y"
+#line 204 "d.y"
                                                                                                                                  {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-5].identifierName)) != NULL) {
@@ -1742,11 +1746,11 @@ yyreduce:
 											}
 										}
 									 }
-#line 1746 "y.tab.c"
+#line 1750 "y.tab.c"
     break;
 
   case 14:
-#line 219 "d.y"
+#line 223 "d.y"
                                                                                                {
 									 	// Check if there's a type definition. If not, its type is recognized from returnBlock
 									 	if ((yyvsp[-4].intValue) == -1) {
@@ -1759,11 +1763,11 @@ yyreduce:
 										// Pop the current symbol table before leaving this scope
 										popTable();
 									 }
-#line 1763 "y.tab.c"
+#line 1767 "y.tab.c"
     break;
 
   case 15:
-#line 231 "d.y"
+#line 235 "d.y"
                                                                                                                    {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-4].identifierName)) != NULL) {
@@ -1775,11 +1779,11 @@ yyreduce:
 										// Create a new symbol table for the following returnBlock
 										createNewTable();
 									 }
-#line 1779 "y.tab.c"
+#line 1783 "y.tab.c"
     break;
 
   case 16:
-#line 241 "d.y"
+#line 245 "d.y"
                                                                                                {
 									 	// Check if there's a type definition. If not, its type is recognized from returnBlock
 									 	if ((yyvsp[-4].intValue) == -1) {
@@ -1792,11 +1796,11 @@ yyreduce:
 										// Pop the current symbol table before leaving this scope
 									 	popTable();
 									 }
-#line 1796 "y.tab.c"
+#line 1800 "y.tab.c"
     break;
 
   case 17:
-#line 253 "d.y"
+#line 257 "d.y"
                                                                                                                           {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-3].identifierName)) != NULL) {
@@ -1817,20 +1821,20 @@ yyreduce:
 											}
 										}
 									 }
-#line 1821 "y.tab.c"
+#line 1825 "y.tab.c"
     break;
 
   case 18:
-#line 272 "d.y"
+#line 276 "d.y"
                                                                                          {
 									 	// Pop the current symbol table before leaving this scope
 										popTable();
 									 }
-#line 1830 "y.tab.c"
+#line 1834 "y.tab.c"
     break;
 
   case 19:
-#line 276 "d.y"
+#line 280 "d.y"
                                                                                                           {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-2].identifierName)) != NULL) {
@@ -1842,26 +1846,26 @@ yyreduce:
 										// Create a new symbol table for the following returnBlock
 										createNewTable();
 									 }
-#line 1846 "y.tab.c"
+#line 1850 "y.tab.c"
     break;
 
   case 20:
-#line 286 "d.y"
+#line 290 "d.y"
                                                                                          {
 									 	// Pop the current symbol table before leaving this scope
 									 	popTable();
 									 }
-#line 1855 "y.tab.c"
+#line 1859 "y.tab.c"
     break;
 
   case 21:
-#line 292 "d.y"
+#line 296 "d.y"
                                                                                    { (yyval.identifierName) = (yyvsp[0].identifierName); }
-#line 1861 "y.tab.c"
+#line 1865 "y.tab.c"
     break;
 
   case 22:
-#line 295 "d.y"
+#line 299 "d.y"
                                                                                                  {
 							 	// Store all the arguments information and return it
 							 	char** previousArgumentNames = (yyvsp[-4].arguments) -> argumentNames;
@@ -1887,11 +1891,11 @@ yyreduce:
 									free((yyvsp[-4].arguments));
 								}
 							 }
-#line 1891 "y.tab.c"
+#line 1895 "y.tab.c"
     break;
 
   case 23:
-#line 320 "d.y"
+#line 324 "d.y"
                                                                                {
 							 	// Store the argument information and return it
 							 	(yyval.arguments) = (Arguments*)malloc(sizeof(Arguments));
@@ -1901,35 +1905,35 @@ yyreduce:
 								(yyval.arguments) -> argumentTypes[0] = (yyvsp[0].intValue);
 								(yyval.arguments) -> argumentNum = 1;
 							 }
-#line 1905 "y.tab.c"
+#line 1909 "y.tab.c"
     break;
 
   case 26:
-#line 335 "d.y"
+#line 339 "d.y"
                                                                        {
 					 	(yyval.intValue) = (yyvsp[-1].intValue);
 					 }
-#line 1913 "y.tab.c"
+#line 1917 "y.tab.c"
     break;
 
   case 27:
-#line 338 "d.y"
+#line 342 "d.y"
                                                                     {
 					 	(yyval.intValue) = (yyvsp[0].intValue);
 					 }
-#line 1921 "y.tab.c"
+#line 1925 "y.tab.c"
     break;
 
   case 28:
-#line 341 "d.y"
+#line 345 "d.y"
                                                              {
 					 	(yyval.intValue) = (yyvsp[0].intValue);
 					 }
-#line 1929 "y.tab.c"
+#line 1933 "y.tab.c"
     break;
 
   case 35:
-#line 354 "d.y"
+#line 358 "d.y"
                                                   {
 				// Check if the identifier exists, and check if the type is not matched. 
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[-2].identifierName));
@@ -1940,11 +1944,11 @@ yyreduce:
 					yyerror("Type not matched.");
 				}
 			}
-#line 1944 "y.tab.c"
+#line 1948 "y.tab.c"
     break;
 
   case 36:
-#line 364 "d.y"
+#line 368 "d.y"
                                                                        {
 				// Check if the identifier exists, and check if the type is not matched, and check if the identifier between '[' and ']' is an integer
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[-5].identifierName));
@@ -1961,11 +1965,11 @@ yyreduce:
 					yyerror("Type not matched.");
 				}
 			}
-#line 1965 "y.tab.c"
+#line 1969 "y.tab.c"
     break;
 
   case 39:
-#line 382 "d.y"
+#line 386 "d.y"
                                           {
 				// Check if the identifier exists
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -1973,19 +1977,19 @@ yyreduce:
 					yyerrorForIdentifierNotFound((yyvsp[0].identifierName));
 				}
 			}
-#line 1977 "y.tab.c"
+#line 1981 "y.tab.c"
     break;
 
   case 42:
-#line 393 "d.y"
+#line 397 "d.y"
                                                                     {
 					 (yyval.intValue) = (yyvsp[0].intValue);
 				  }
-#line 1985 "y.tab.c"
+#line 1989 "y.tab.c"
     break;
 
   case 43:
-#line 396 "d.y"
+#line 400 "d.y"
                                                                               {
 						// Check if the types of the two sides match
 						if ((yyvsp[-2].intValue) != (yyvsp[0].intValue)) {
@@ -2001,59 +2005,59 @@ yyreduce:
 							}
 						}
 					}
-#line 2005 "y.tab.c"
+#line 2009 "y.tab.c"
     break;
 
   case 44:
-#line 411 "d.y"
+#line 415 "d.y"
                                                              {
 						(yyval.intValue) = (yyvsp[-1].intValue);
 					}
-#line 2013 "y.tab.c"
+#line 2017 "y.tab.c"
     break;
 
   case 45:
-#line 414 "d.y"
+#line 418 "d.y"
                                                              {
 						(yyval.intValue) = (yyvsp[0].intValue);
 					}
-#line 2021 "y.tab.c"
+#line 2025 "y.tab.c"
     break;
 
   case 46:
-#line 419 "d.y"
+#line 423 "d.y"
                                                                                      {
 							 	(yyval.intValue) = (yyvsp[0].intValue);
 							 }
-#line 2029 "y.tab.c"
+#line 2033 "y.tab.c"
     break;
 
   case 47:
-#line 422 "d.y"
+#line 426 "d.y"
                                                                               {
 							 	(yyval.intValue) = (yyvsp[-1].intValue);
 							 }
-#line 2037 "y.tab.c"
+#line 2041 "y.tab.c"
     break;
 
   case 48:
-#line 425 "d.y"
+#line 429 "d.y"
                                                                               {
 							 	(yyval.intValue) = (yyvsp[0].intValue);
 							 }
-#line 2045 "y.tab.c"
+#line 2049 "y.tab.c"
     break;
 
   case 49:
-#line 430 "d.y"
+#line 434 "d.y"
                                                                                                             {
 									 (yyval.intValue) = (yyvsp[0].intValue);
 									}
-#line 2053 "y.tab.c"
+#line 2057 "y.tab.c"
     break;
 
   case 50:
-#line 433 "d.y"
+#line 437 "d.y"
                                                                                                                               {
 										// Check if the types of the two sides match
 										if ((yyvsp[-2].intValue) != (yyvsp[0].intValue)) {
@@ -2069,137 +2073,137 @@ yyreduce:
 											}
 										}
 									}
-#line 2073 "y.tab.c"
+#line 2077 "y.tab.c"
     break;
 
   case 51:
-#line 448 "d.y"
+#line 452 "d.y"
                                                                                                      {
 										(yyval.intValue) = (yyvsp[-1].intValue);
 									}
-#line 2081 "y.tab.c"
+#line 2085 "y.tab.c"
     break;
 
   case 52:
-#line 451 "d.y"
+#line 455 "d.y"
                                                                                                      {
 										(yyval.intValue) = (yyvsp[0].intValue);
 									}
-#line 2089 "y.tab.c"
+#line 2093 "y.tab.c"
     break;
 
   case 53:
-#line 456 "d.y"
+#line 460 "d.y"
                                                                                                                              {
 											 	(yyval.intValue) = (yyvsp[0].intValue);
 											 }
-#line 2097 "y.tab.c"
+#line 2101 "y.tab.c"
     break;
 
   case 54:
-#line 459 "d.y"
+#line 463 "d.y"
                                                                                                                       {
 											 	(yyval.intValue) = (yyvsp[-1].intValue);
 											 }
-#line 2105 "y.tab.c"
+#line 2109 "y.tab.c"
     break;
 
   case 55:
-#line 462 "d.y"
+#line 466 "d.y"
                                                                                                                       {
 											 	(yyval.intValue) = (yyvsp[0].intValue);
 											 }
-#line 2113 "y.tab.c"
+#line 2117 "y.tab.c"
     break;
 
   case 56:
-#line 467 "d.y"
+#line 471 "d.y"
                                      { (yyval.intValue) = -1; }
-#line 2119 "y.tab.c"
+#line 2123 "y.tab.c"
     break;
 
   case 57:
-#line 468 "d.y"
+#line 472 "d.y"
                                        { (yyval.intValue) = -1; }
-#line 2125 "y.tab.c"
+#line 2129 "y.tab.c"
     break;
 
   case 58:
-#line 469 "d.y"
+#line 473 "d.y"
                                        { (yyval.intValue) = -1; }
-#line 2131 "y.tab.c"
+#line 2135 "y.tab.c"
     break;
 
   case 59:
-#line 470 "d.y"
+#line 474 "d.y"
                                        { (yyval.intValue) = -1; }
-#line 2137 "y.tab.c"
+#line 2141 "y.tab.c"
     break;
 
   case 60:
-#line 471 "d.y"
+#line 475 "d.y"
                                        { (yyval.intValue) = NODE_BOOL; }
-#line 2143 "y.tab.c"
+#line 2147 "y.tab.c"
     break;
 
   case 61:
-#line 472 "d.y"
+#line 476 "d.y"
                                        { (yyval.intValue) = NODE_BOOL; }
-#line 2149 "y.tab.c"
+#line 2153 "y.tab.c"
     break;
 
   case 62:
-#line 473 "d.y"
+#line 477 "d.y"
                                        { (yyval.intValue) = NODE_BOOL; }
-#line 2155 "y.tab.c"
+#line 2159 "y.tab.c"
     break;
 
   case 63:
-#line 474 "d.y"
+#line 478 "d.y"
                                        { (yyval.intValue) = NODE_BOOL; }
-#line 2161 "y.tab.c"
+#line 2165 "y.tab.c"
     break;
 
   case 64:
-#line 475 "d.y"
+#line 479 "d.y"
                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2167 "y.tab.c"
+#line 2171 "y.tab.c"
     break;
 
   case 65:
-#line 476 "d.y"
+#line 480 "d.y"
                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2173 "y.tab.c"
+#line 2177 "y.tab.c"
     break;
 
   case 66:
-#line 477 "d.y"
+#line 481 "d.y"
                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2179 "y.tab.c"
+#line 2183 "y.tab.c"
     break;
 
   case 67:
-#line 478 "d.y"
+#line 482 "d.y"
                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2185 "y.tab.c"
+#line 2189 "y.tab.c"
     break;
 
   case 68:
-#line 479 "d.y"
+#line 483 "d.y"
                                        { (yyval.intValue) = NODE_BOOL; }
-#line 2191 "y.tab.c"
+#line 2195 "y.tab.c"
     break;
 
   case 69:
-#line 482 "d.y"
+#line 486 "d.y"
                                                                               {
 										(yyval.intValue) = (yyvsp[0].intValue);
 									}
-#line 2199 "y.tab.c"
+#line 2203 "y.tab.c"
     break;
 
   case 70:
-#line 485 "d.y"
+#line 489 "d.y"
                                                                                      {
 										// Check if the identifier exists
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -2210,11 +2214,11 @@ yyreduce:
 											(yyval.intValue) = tableNode -> type;
 										}
 									}
-#line 2214 "y.tab.c"
+#line 2218 "y.tab.c"
     break;
 
   case 71:
-#line 495 "d.y"
+#line 499 "d.y"
                                                                                              {
 										// Check if the function has a return type
 										if ((yyvsp[0].intValue) == -1) {
@@ -2224,27 +2228,27 @@ yyreduce:
 											(yyval.intValue) = (yyvsp[0].intValue);
 										}
 									}
-#line 2228 "y.tab.c"
+#line 2232 "y.tab.c"
     break;
 
   case 72:
-#line 504 "d.y"
+#line 508 "d.y"
                                                                                          {
 										(yyval.intValue) = (yyvsp[0].intValue);
 									}
-#line 2236 "y.tab.c"
+#line 2240 "y.tab.c"
     break;
 
   case 73:
-#line 509 "d.y"
+#line 513 "d.y"
                                                                                                               {
 														(yyval.intValue) = (yyvsp[0].intValue);
 													}
-#line 2244 "y.tab.c"
+#line 2248 "y.tab.c"
     break;
 
   case 74:
-#line 512 "d.y"
+#line 516 "d.y"
                                                                                                                      {
 														// Check if the identifier exists, and it is a constant
 														TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -2258,11 +2262,11 @@ yyreduce:
 															(yyval.intValue) = tableNode -> type;
 														}
 													}
-#line 2262 "y.tab.c"
+#line 2266 "y.tab.c"
     break;
 
   case 75:
-#line 527 "d.y"
+#line 531 "d.y"
                                                                                                                        {
 										// Check if the identifier exists, and it's a function
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[-3].identifierName));
@@ -2306,11 +2310,11 @@ yyreduce:
 											free((yyvsp[-1].arguments));
 										}
 									}
-#line 2310 "y.tab.c"
+#line 2314 "y.tab.c"
     break;
 
   case 76:
-#line 570 "d.y"
+#line 574 "d.y"
                                                                                              {
 										// Check if the identifier exists, and it's a function
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[-2].identifierName));
@@ -2334,11 +2338,11 @@ yyreduce:
 											}
 										}
 									}
-#line 2338 "y.tab.c"
+#line 2342 "y.tab.c"
     break;
 
   case 77:
-#line 595 "d.y"
+#line 599 "d.y"
                                                                                                                                                     {
 														// Store the arguments information and return it
 														int* previousArgumentTypes = (yyvsp[-2].arguments) -> argumentTypes;
@@ -2357,11 +2361,11 @@ yyreduce:
 															free((yyvsp[-2].arguments));
 														}
 													 }
-#line 2361 "y.tab.c"
+#line 2365 "y.tab.c"
     break;
 
   case 78:
-#line 613 "d.y"
+#line 617 "d.y"
                                                                                                                       {
 														// Store the arguments information and return it
 														(yyval.arguments) = (Arguments*)malloc(sizeof(Arguments));
@@ -2369,11 +2373,11 @@ yyreduce:
 														(yyval.arguments) -> argumentTypes[0] = (yyvsp[0].intValue);
 														(yyval.arguments) -> argumentNum = 1;
 													 }
-#line 2373 "y.tab.c"
+#line 2377 "y.tab.c"
     break;
 
   case 79:
-#line 623 "d.y"
+#line 627 "d.y"
                                                                                       {
 								// Check if the identifier exists, and it's an array
 								TableNode* tableNode = lookUpInEveryScope((yyvsp[-3].identifierName));
@@ -2392,44 +2396,44 @@ yyreduce:
 									}
 								}
 							}
-#line 2396 "y.tab.c"
+#line 2400 "y.tab.c"
     break;
 
   case 80:
-#line 643 "d.y"
+#line 647 "d.y"
                                                                              {
 					 	// Check if the type of expression is bool
 					 	if ((yyvsp[-2].intValue) != NODE_BOOL) {
 							yyerror("\"if\" needs a Boolean in its brackets.");
 						}
 					 }
-#line 2407 "y.tab.c"
+#line 2411 "y.tab.c"
     break;
 
   case 81:
-#line 649 "d.y"
+#line 653 "d.y"
                                                                                                   {
 					 	// Check if the type of expression is bool
 					 	if ((yyvsp[-4].intValue) != NODE_BOOL) {
 							yyerror("\"if\" needs a Boolean in its brackets.");
 						}
 					 }
-#line 2418 "y.tab.c"
+#line 2422 "y.tab.c"
     break;
 
   case 82:
-#line 657 "d.y"
+#line 661 "d.y"
                                                        {
 			// Check if the type of expression is bool
 			if ((yyvsp[-2].intValue) != NODE_BOOL) {
 				yyerror("\"while\" needs a Boolean in its brackets.");
 		 	}
 		}
-#line 2429 "y.tab.c"
+#line 2433 "y.tab.c"
     break;
 
   case 83:
-#line 663 "d.y"
+#line 667 "d.y"
                                                                {
 			// Create a new symbol table for the identifier in the loop for
 			createNewTable();
@@ -2442,96 +2446,96 @@ yyreduce:
 				insert((yyvsp[-5].identifierName), NODE_INT, -1, NULL, 0, 0);
 			}
 		}
-#line 2446 "y.tab.c"
+#line 2450 "y.tab.c"
     break;
 
   case 84:
-#line 674 "d.y"
+#line 678 "d.y"
                                 {
 			// Pop the current symbol table
 			popTable();
 		}
-#line 2455 "y.tab.c"
+#line 2459 "y.tab.c"
     break;
 
   case 85:
-#line 679 "d.y"
+#line 683 "d.y"
                {
 							// Create a new symbol table because it has entering new scope
 						 	createNewTable();
 						 }
-#line 2464 "y.tab.c"
+#line 2468 "y.tab.c"
     break;
 
   case 86:
-#line 682 "d.y"
+#line 686 "d.y"
                                                           {
 						 	// Pop the current symbol table because it is leaving this scope
 						 	popTable();
 						 }
-#line 2473 "y.tab.c"
+#line 2477 "y.tab.c"
     break;
 
   case 87:
-#line 686 "d.y"
+#line 690 "d.y"
                                                    {
 							// Create a new symbol table because it has entering new scope
 						 	createNewTable();
 						 }
-#line 2482 "y.tab.c"
+#line 2486 "y.tab.c"
     break;
 
   case 88:
-#line 689 "d.y"
+#line 693 "d.y"
                                                                  {
 						 	// Pop the current symbol table because it is leaving this scope
 						 	popTable();
 						 }
-#line 2491 "y.tab.c"
+#line 2495 "y.tab.c"
     break;
 
   case 90:
-#line 698 "d.y"
+#line 702 "d.y"
                          {
 			(yyval.intValue) = (yyvsp[0].intValue);
 		}
-#line 2499 "y.tab.c"
+#line 2503 "y.tab.c"
     break;
 
   case 91:
-#line 701 "d.y"
+#line 705 "d.y"
                   {
 			(yyval.intValue) = -1;
 		}
-#line 2507 "y.tab.c"
+#line 2511 "y.tab.c"
     break;
 
   case 92:
-#line 706 "d.y"
+#line 710 "d.y"
                          { (yyval.intValue) = NODE_INT; }
-#line 2513 "y.tab.c"
+#line 2517 "y.tab.c"
     break;
 
   case 93:
-#line 707 "d.y"
+#line 711 "d.y"
                          { (yyval.intValue) = NODE_FLOAT; }
-#line 2519 "y.tab.c"
+#line 2523 "y.tab.c"
     break;
 
   case 94:
-#line 708 "d.y"
+#line 712 "d.y"
                            { (yyval.intValue) = NODE_BOOL; }
-#line 2525 "y.tab.c"
+#line 2529 "y.tab.c"
     break;
 
   case 95:
-#line 709 "d.y"
+#line 713 "d.y"
                           { (yyval.intValue) = NODE_STRING; }
-#line 2531 "y.tab.c"
+#line 2535 "y.tab.c"
     break;
 
 
-#line 2535 "y.tab.c"
+#line 2539 "y.tab.c"
 
       default: break;
     }
@@ -2763,7 +2767,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 710 "d.y"
+#line 714 "d.y"
 
 void yyerror(char *s) {
 	fprintf(stderr, "%s (Line: %d)\n", s, lineCount);

@@ -1,4 +1,4 @@
-class main {
+class example {
 	val e = -(2 + 3 + -4)
 	val a = 5
 	var c : int

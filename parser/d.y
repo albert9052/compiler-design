@@ -118,15 +118,19 @@ program:
 			 	createNewTable();
 			 } '{' classBlock '}' {
 				// Pop a symbol table before leaving the classBlock
+				TableNode* tableNode = lookUpInThisScope("main");
+				if (tableNode == NULL) {
+					yyerror("Missing \"main\" function");
+				}
+				else if (tableNode -> type != NODE_FUNCTION_WITH_NO_RETURN_VALUE && tableNode -> type != NODE_FUNCTION_WITH_RETURN_VALUE) {
+					yyerror("\"main\" is not a function");
+				}
 				popTable();
 			 }
 			 ;
 classIdentifier:
 							 IDENTIFIER { 
 							 	// Insert the class identifier into the current symbol table
-								if (strcmp($<identifierName>1, "main") != 0) {
-									yyerror("A program needs a class \"main\"");
-								}
 								insert($<identifierName>1, NODE_CLASS, -1, NULL, 0, 0); 
 							 }
 							 ;
