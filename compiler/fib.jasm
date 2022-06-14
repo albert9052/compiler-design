@@ -1,0 +1,51 @@
+class fib
+{
+field static int n = 8
+field static int Fn = 1
+field static int FNminus1 = 1
+field static int temp
+method public static void main(java.lang.String[])
+max_stack 15
+max_locals 15
+{
+nop
+L0_BEGIN:
+getstatic int fib.n
+sipush 2
+isub
+ifgt L1_TRUE
+iconst_0
+goto L1_REST
+L1_TRUE:
+iconst_1
+L1_REST:
+ifeq L0_FALSE
+goto L0_TRUE
+L0_TRUE:
+getstatic int fib.Fn
+putstatic int fib.temp
+getstatic int fib.Fn
+getstatic int fib.FNminus1
+iadd
+putstatic int fib.Fn
+getstatic int fib.temp
+putstatic int fib.FNminus1
+getstatic int fib.n
+sipush 1
+isub
+putstatic int fib.n
+goto L0_BEGIN
+goto L0_REST
+L0_FALSE:
+goto L0_REST
+L0_REST:
+nop
+getstatic java.io.PrintStream java.lang.System.out
+ldc "Result of computation: "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int fib.Fn
+invokevirtual void java.io.PrintStream.println(int)
+return
+}
+}

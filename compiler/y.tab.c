@@ -197,9 +197,10 @@ int yyparse (void);
 #endif /* !YY_YY_Y_TAB_H_INCLUDED  */
 
 /* Second part of user prologue.  */
-#line 35 "d.y"
+#line 37 "d.y"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 // Initialize the parser
 void initParser();
@@ -219,8 +220,14 @@ void yyerrorForIdentifierNotFunction(char* identifierName);
 // yyerror function for the situation of identifier not begin a array
 void yyerrorForIdentifierNotArray(char* identifierName);
 
+// yyerror exit
+void yyerrorExit();
+
+FILE* file;
+
 int yylex(void);
 int sym[26];
+char* className;
 
 // This is a structure for passing the arguments information, in order to declare them after creating a new symbol table
 typedef struct parserArguments {
@@ -239,6 +246,22 @@ typedef struct parserArguments {
 #define NODE_FUNCTION_WITH_RETURN_VALUE 6
 #define NODE_CLASS 7
 
+// These are constants used when passing operator's type
+#define OPERATOR_ADD 0
+#define OPERATOR_SUB 1
+#define OPERATOR_MUL 2
+#define OPERATOR_DIV 3
+#define OPERATOR_REM 4
+#define OPERATOR_AND 5
+#define OPERATOR_OR 6
+#define OPERATOR_XOR 7
+#define OPERATOR_LT 8
+#define OPERATOR_GE 9
+#define OPERATOR_LE 10
+#define OPERATOR_EQ 11
+#define OPERATOR_NE 12
+#define OPERATOR_GT 13
+
 // This is the structure of basic unit in symbol table
 typedef struct TN {
 	char* string;
@@ -247,11 +270,31 @@ typedef struct TN {
 	int* argumentTypes;
 	int argumentNum;
 	int constant;
+	int constantValue;
+	int global;
+	int index;
 	struct TN* next;
 } TableNode;
 
+typedef struct PN {
+	int value;
+	char* stringValue;
+	int type;
+} ParameterNode;
+
+typedef struct UnfinishedCC {
+	int index;
+	struct UnfinishedCC* next;
+	struct UnfinishedCC* previous;
+} UnfinishedConditionCounter;
+
+UnfinishedConditionCounter* unfinishedConditionCounter;
+
+// For counting the number of lines so far
+int lineCount;
+
 // Insert a new identifier and its information into the current symbol table
-void insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant);
+TableNode* insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant, int constantValue);
 
 // Look up a key in the current symbol table, and return its TableNode
 TableNode* lookUpInThisScope(const char* key);
@@ -260,7 +303,7 @@ TableNode* lookUpInThisScope(const char* key);
 TableNode* lookUpInEveryScope(const char* key);
 
 // Create a new symbol table, and connect it to the previous symbol table
-void createNewTable();
+void createNewTable(int globalTable);
 
 // Pop the current symbol table, and disconnect it from the previous symbol table
 void popTable();
@@ -274,10 +317,104 @@ void printAllTables();
 // Initialize the scanner
 void initScanner();
 
-// For counting the number of lines so far
-int lineCount;
+// Print out the start of a class
+void printTheStartOfClassDeclaration(char* name);
 
-#line 281 "y.tab.c"
+// Print out the end of a class
+void printTheEndOfClassDeclaration();
+
+// Print out the start of a function
+void printTheStartOfFunctionDeclaration(char* name, int type, struct parserArguments* arguments);
+
+// Print out the end of a function
+void printTheEndOfFunctionDeclaration();
+
+// Print a "iload 0" or "iconst_0" to initialize a variable
+void printZeroToInitializeIt(int type);
+
+// Print out local variable declaration
+void printLocalVariableDeclaration(int index);
+
+// Print out global vairable declaration with a value
+void printGlobalVariableDeclarationWithoutValue(char* name, int type);
+
+// Print out global variable declaration
+void printGlobalVariableDeclaration(char* name, int type, int value);
+
+// Print out load variable
+void printAssignVariable(TableNode* node);
+
+// Print out ireturn to return
+void printReturnVariable();
+
+// Print out return to return
+void printReturn();
+
+// Print out ineg
+void printUminus();
+
+// Print out the value, to push the value into the stack
+void printValue(int type, int value);
+
+// Print out iload to load local variable
+void printLoadingLocalVariable(int index);
+
+// Print out iload to load global variable
+void printLoadingGlobalVariable(char* name, int type);
+
+// Print out those operators
+void printOperator(int operator);
+
+// Print out those condition operators
+void printConditionWithOperator(int operator);
+
+// Print out condition codes
+void printCondition();
+
+// Print out L<number>-FALSE flag
+void printConditionElseFlag();
+
+// Print out L<number>-REST flag
+void printConditionRestFlag();
+
+// Print out ldc to load the string
+void printLoadingString(char* stringToPrint);
+
+// Print the preparation of printing
+void printPreparationForPrint();
+
+// Invoke the function to print
+void printPrinting(int type, int nextLine);
+
+// Print the begin flag of a while loop
+void printWhileLoopBeginFlag();
+
+// Print the goto begin flag code at the end of the true flag section
+void printGotoWhileLoopBeginFlag();
+
+// Print the codes required between starting expression and ending expression
+void printBetweenForLoopStartingNumAndEndingNum(int index);
+
+// Print the codes required after starting expression and ending expression
+void printAfterForLoopStartingNumAndEndingNum(int index);
+
+// Print the end of the true flag section of a for loop
+void printTheEndOfTrueFlagSectionOfForLoop();
+
+// Print the invocation of a function
+void printInvocationOfFunction(char* name, int type, int* argumentTypes, int argumentNum);
+
+// Do some preparation before entering if
+void printPreparationForIf();
+
+// print nop
+void printNOP();
+
+int nextConditionCounter;
+
+void initParser();
+
+#line 418 "y.tab.c"
 
 
 #ifdef short
@@ -582,16 +719,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  5
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   431
+#define YYLAST   370
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  46
+#define YYNTOKENS  47
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  37
+#define YYNNTS  46
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  95
+#define YYNRULES  103
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  188
+#define YYNSTATES  196
 
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   282
@@ -609,7 +746,7 @@ static const yytype_int8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    29,     2,     2,     2,     2,    28,     2,
+       2,     2,     2,    29,     2,     2,     2,    46,    28,     2,
       22,    23,    38,    36,    45,    37,     2,    39,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,    24,     2,
       30,    42,    35,     2,     2,     2,     2,     2,     2,     2,
@@ -641,16 +778,17 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   116,   116,   116,   132,   138,   139,   140,   141,   144,
-     159,   175,   186,   204,   204,   235,   235,   257,   257,   280,
-     280,   296,   299,   324,   335,   336,   339,   342,   345,   350,
-     351,   352,   353,   354,   355,   358,   368,   384,   385,   386,
-     393,   394,   397,   400,   415,   418,   423,   426,   429,   434,
-     437,   452,   455,   460,   463,   466,   471,   472,   473,   474,
-     475,   476,   477,   478,   479,   480,   481,   482,   483,   486,
-     489,   499,   508,   513,   516,   531,   574,   599,   617,   627,
-     647,   653,   661,   667,   667,   683,   683,   690,   690,   699,
-     702,   705,   710,   711,   712,   713
+       0,   255,   255,   255,   274,   281,   282,   283,   284,   287,
+     305,   324,   343,   360,   371,   390,   390,   415,   415,   431,
+     431,   456,   456,   474,   477,   502,   513,   514,   517,   518,
+     519,   520,   521,   522,   525,   539,   555,   555,   560,   560,
+     565,   572,   575,   580,   584,   599,   602,   607,   611,   614,
+     619,   623,   701,   704,   709,   713,   716,   721,   722,   723,
+     724,   725,   726,   727,   728,   729,   730,   731,   732,   733,
+     734,   737,   745,   764,   773,   778,   781,   798,   842,   867,
+     885,   895,   915,   915,   920,   928,   928,   939,   939,   952,
+     964,   966,   952,   976,   976,   983,   983,   992,   994,   999,
+    1002,  1007,  1012,  1017
 };
 #endif
 
@@ -664,15 +802,16 @@ static const char *const yytname[] =
   "READ", "RETURN", "IF", "ELSE", "FOR", "WHILE", "IN", "'('", "')'",
   "':'", "'{'", "'}'", "'|'", "'&'", "'!'", "'<'", "GE", "LE", "EQ", "NE",
   "'>'", "'+'", "'-'", "'*'", "'/'", "DD", "UMINUS", "'='", "'['", "']'",
-  "','", "$accept", "program", "$@1", "classIdentifier", "classBlock",
-  "variableDeclaration", "constantDeclaration", "functionDeclaration",
-  "$@2", "$@3", "$@4", "$@5", "functionIdentifier", "formalArguments",
-  "block", "returnBlock", "statement", "simple", "expression",
-  "rightExpression", "constantExpression", "rightConstantExpression",
-  "operator", "expressionTerminal", "constantExpressionTerminal",
-  "functionInvocation", "functionInvocationArguments", "arrayReference",
-  "conditional", "loop", "$@6", "simpleOrBlock", "$@7", "$@8",
-  "procedureInvocation", "type", "value", YY_NULLPTR
+  "','", "'%'", "$accept", "program", "$@1", "classIdentifier",
+  "classBlock", "globalVariableDeclaration", "variableDeclaration",
+  "constantDeclaration", "functionDeclaration", "$@2", "$@3", "$@4", "$@5",
+  "functionIdentifier", "formalArguments", "block", "statement", "simple",
+  "$@6", "$@7", "expression", "rightExpression", "constantExpression",
+  "rightConstantExpression", "operator", "expressionTerminal",
+  "constantExpressionTerminal", "functionInvocation",
+  "functionInvocationArguments", "arrayReference", "conditional", "$@8",
+  "ifRest", "$@9", "loop", "$@10", "@11", "$@12", "$@13", "simpleOrBlock",
+  "$@14", "$@15", "procedureInvocation", "condition", "type", "value", YY_NULLPTR
 };
 #endif
 
@@ -685,16 +824,16 @@ static const yytype_int16 yytoknum[] =
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,    40,    41,    58,   123,   125,   124,    38,    33,
       60,   277,   278,   279,   280,    62,    43,    45,    42,    47,
-     281,   282,    61,    91,    93,    44
+     281,   282,    61,    91,    93,    44,    37
 };
 # endif
 
-#define YYPACT_NINF (-117)
+#define YYPACT_NINF (-151)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-88)
+#define YYTABLE_NINF (-96)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -703,25 +842,26 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-      -4,     2,    12,  -117,  -117,  -117,    -3,     7,    17,    52,
-      57,    40,     7,     7,     7,  -117,    45,    44,    51,  -117,
-    -117,  -117,  -117,    -2,    70,    53,    74,    54,    63,    73,
-       0,    56,    24,  -117,    24,    82,    88,    81,    99,   115,
-     121,  -117,  -117,  -117,  -117,  -117,    24,    24,   392,  -117,
-    -117,   392,  -117,  -117,   376,   130,   118,   103,   101,   244,
-    -117,  -117,  -117,  -117,  -117,  -117,  -117,  -117,  -117,  -117,
-    -117,  -117,  -117,  -117,   107,   125,    20,   127,   127,   144,
-     127,   132,   136,   145,  -117,  -117,   179,  -117,  -117,  -117,
-    -117,  -117,  -117,  -117,   376,   140,  -117,  -117,    24,    24,
-    -117,  -117,   387,    98,   127,   127,    30,   127,   127,   392,
-    -117,  -117,  -117,  -117,   392,  -117,   392,   127,   161,   127,
-    -117,  -117,   147,   193,  -117,   261,  -117,   127,   398,   143,
-    -117,   392,    13,   392,   208,   127,   278,  -117,   133,   295,
-     150,   312,   387,  -117,  -117,   343,   127,  -117,  -117,   127,
-     149,   226,  -117,   127,   127,  -117,  -117,   162,   185,   162,
-     171,   146,   392,   127,  -117,   329,  -117,   183,   102,   177,
-     175,  -117,  -117,   376,   392,  -117,   162,     8,  -117,   376,
-     213,  -117,   207,   188,  -117,  -117,   162,  -117
+       0,     4,    20,  -151,  -151,  -151,    -2,    45,    23,    36,
+      38,    21,    45,    45,    45,  -151,    46,    59,    59,  -151,
+    -151,  -151,  -151,    -1,    72,    48,    51,    70,    73,   -19,
+    -151,    58,    58,    87,    88,    79,    91,   109,  -151,  -151,
+    -151,  -151,    58,    58,   246,  -151,  -151,   246,  -151,  -151,
+     350,   111,    94,   110,   126,    90,  -151,  -151,  -151,  -151,
+    -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,
+     102,   108,    24,   133,  -151,  -151,   134,   107,  -151,   120,
+    -151,  -151,  -151,   280,  -151,  -151,  -151,  -151,  -151,  -151,
+    -151,   350,   131,  -151,    58,    58,  -151,  -151,   350,    66,
+     107,   107,   121,   107,   107,  -151,    -3,   107,   107,   246,
+    -151,  -151,  -151,  -151,   124,   140,   128,  -151,  -151,   123,
+     294,  -151,   146,    90,   308,  -151,   246,   -11,   246,   206,
+     139,   125,   246,   246,   107,   166,    90,   115,   107,  -151,
+    -151,   107,   350,  -151,  -151,  -151,  -151,   107,   129,   127,
+     107,   226,  -151,   107,   107,  -151,  -151,   246,   143,   147,
+     163,   322,   246,   107,   184,   246,  -151,   186,    90,   165,
+     107,   165,  -151,   246,   144,  -151,   173,    44,   181,   246,
+    -151,  -151,   189,   -27,  -151,   350,   168,   165,   336,   107,
+    -151,  -151,   246,   187,   165,  -151
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -730,42 +870,45 @@ static const yytype_int16 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        0,     0,     0,     4,     2,     1,     0,     8,     0,     0,
-       0,     0,     8,     8,     8,    21,     0,    91,    91,     3,
-       5,     6,     7,     0,     0,     9,     0,     0,     0,    19,
-       0,    90,     0,    90,     0,     0,     0,     0,    17,     0,
-       0,    92,    93,    94,    95,    74,     0,     0,    10,    52,
-      73,    12,    23,    15,     0,     0,     0,     0,     0,     0,
-      49,    62,    61,    60,    63,    64,    65,    66,    67,    68,
-      56,    57,    58,    59,     0,     0,     0,     0,     0,     0,
-      41,     0,     0,     0,    29,    30,     0,    25,    31,    89,
-      32,    33,    34,    13,     0,     0,    11,    51,     0,     0,
-      50,    55,     0,     0,     0,     0,    70,     0,     0,    37,
-      45,    71,    72,    69,    38,    39,    40,     0,     0,     0,
-      20,    24,     0,     0,    22,     0,    53,    41,     0,     0,
-      76,    78,     0,    35,     0,     0,     0,    42,     0,     0,
-       0,     0,     0,    18,    54,    40,    41,    16,    75,     0,
-       0,     0,    44,     0,     0,    43,    48,    85,     0,    85,
-       0,    27,    77,     0,    79,     0,    46,    80,     0,     0,
-       0,    82,    14,    26,    36,    47,    85,     0,    86,     0,
-       0,    81,     0,     0,    88,    83,    85,    84
+       0,     0,     8,     8,     8,    23,     0,   100,   100,     3,
+       5,     6,     7,     0,     0,     9,     0,     0,    21,     0,
+      99,     0,     0,     0,     0,     0,    19,     0,   101,   102,
+     103,    76,     0,     0,    10,    53,    75,    14,    25,    17,
+       0,     0,     0,     0,     0,    50,    63,    62,    64,    65,
+      66,    67,    68,    69,    70,    57,    58,    59,    60,    61,
+       0,     0,     0,     0,    36,    38,     0,    42,    82,     0,
+      87,    28,    29,     0,    27,    30,    97,    31,    32,    33,
+      15,     0,     0,    52,     0,     0,    51,    56,     0,     0,
+       0,     0,   100,     0,     0,    40,    72,     0,     0,    41,
+      46,    73,    74,    71,     0,     0,     0,    22,    26,     0,
+       0,    24,     0,    54,     0,    78,    80,     0,    34,     0,
+       0,    11,    37,    39,     0,     0,    43,     0,     0,    83,
+      89,     0,     0,    20,    55,    18,    77,     0,     0,    99,
+       0,     0,    45,     0,     0,    44,    49,    98,     0,     0,
+       0,     0,    79,     0,     0,    12,    81,     0,    47,    93,
+       0,    93,    16,    35,     0,    48,    84,     0,     0,    90,
+      88,    13,     0,     0,    94,     0,     0,    93,     0,     0,
+      86,    96,    91,     0,    93,    92
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -117,  -117,  -117,  -117,    42,    78,   134,  -117,  -117,  -117,
-    -117,  -117,  -117,  -117,   -53,    83,   -84,    60,   -70,  -117,
-     -27,  -117,   -45,    91,   156,   -54,  -117,  -117,  -117,  -117,
-    -117,  -116,  -117,  -117,  -117,   214,   -21
+    -151,  -151,  -151,  -151,   114,  -151,  -151,   118,  -151,  -151,
+    -151,  -151,  -151,  -151,  -151,   -89,   -82,    34,  -151,  -151,
+     -72,  -151,     7,  -151,   -37,    89,   157,   -50,  -151,  -151,
+    -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -151,  -150,
+    -151,  -151,  -151,   105,   -15,   -18
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,     2,     6,     4,    11,    84,    85,    14,   122,    75,
-      56,    37,    16,    30,   128,   129,    87,    88,   109,   155,
-      48,   100,   138,   110,    49,   111,   132,   112,    90,    91,
-     186,   167,   168,   169,    92,    25,   113
+      -1,     2,     6,     4,    11,    12,    81,    82,    14,   119,
+      71,    52,    35,    16,    29,    83,    84,    85,   103,   104,
+     157,   155,    44,    96,   137,   110,    45,   111,   127,   112,
+      87,   114,   139,   182,    88,   116,   159,   186,   193,   176,
+     177,   178,    89,   158,    25,   113
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -773,153 +916,144 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      89,    86,   121,    74,     1,    28,    74,    51,   114,     3,
-     116,    50,     5,    50,    74,    74,     8,     9,    10,    59,
-      60,    29,     7,    38,    15,    50,    50,    41,    42,    43,
-      44,    45,    89,   131,   133,   134,   148,   136,   137,   121,
-      89,   123,   103,   171,   121,    39,    46,   139,    89,   141,
-     104,   105,   103,    50,    20,    21,    22,   145,   149,    17,
-     181,    47,   104,   105,    18,   151,    19,    23,    24,    89,
-     187,   125,   126,   135,    89,    26,   161,    50,    50,   162,
-      74,    74,    31,   165,   166,    12,    33,    35,    89,   121,
-      12,    12,    12,   174,    52,    32,    34,    36,   121,    40,
-      53,    41,    42,    43,    44,   106,    54,    89,   173,   177,
-      41,    42,    43,    44,    45,    77,    78,    79,    80,    89,
-     107,   130,    57,    55,    58,    89,   182,    95,    89,    98,
-      41,    42,    43,    44,   106,   108,    41,    42,    43,    44,
-     106,    13,    93,    94,    99,    96,    13,    13,    13,   107,
-     102,   115,   124,    76,   117,   153,     9,    10,   118,    77,
-      78,    79,    80,    81,   108,    82,    83,   119,   140,   147,
-     154,   158,   142,    61,    62,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,    72,    73,    76,   -87,   170,     9,
-      10,   163,    77,    78,    79,    80,    81,   172,    82,    83,
-      76,   176,   179,     9,    10,   120,    77,    78,    79,    80,
-      81,   185,    82,    83,    76,   180,   183,     9,    10,   143,
-      77,    78,    79,    80,    81,   160,    82,    83,   178,   156,
-     101,     0,    27,   184,     0,    61,    62,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,     0,     0,
-       0,     0,   150,    61,    62,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,    72,    73,     0,    97,     0,     0,
-     164,    61,    62,    63,    64,    65,    66,    67,    68,    69,
-      70,    71,    72,    73,   144,     0,     0,     0,    61,    62,
-      63,    64,    65,    66,    67,    68,    69,    70,    71,    72,
-      73,   152,     0,     0,     0,    61,    62,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,   157,     0,
-       0,     0,    61,    62,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    73,   159,     0,     0,     0,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-      72,    73,   175,     0,     0,     0,    61,    62,    63,    64,
-      65,    66,    67,    68,    69,    70,    71,    72,    73,   -28,
-      61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,    73,    76,     0,     0,     9,    10,     0,    77,
-      78,    79,    80,    81,    76,    82,    83,     9,    10,     0,
-      77,    78,    79,   127,    81,    76,    82,    83,     9,    10,
-       0,    77,    78,    79,   146,    81,     0,    82,    83,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-      72,    73
+      86,   118,   120,    26,    36,   109,    27,    70,     1,   124,
+      70,     3,   146,    46,    46,   100,   101,    70,    70,    99,
+       5,   180,    28,     7,    46,    46,    37,   126,   128,   129,
+      15,   132,   133,    86,   147,   135,   136,   190,   118,    47,
+     134,    86,   118,    17,   195,    18,    99,    19,    86,    54,
+      55,   183,    46,   161,     8,     9,    10,    74,    75,    76,
+      77,    38,   151,    39,    40,    41,   100,   101,    23,    38,
+      86,    39,    40,   106,    86,   162,    46,    46,   165,   118,
+      42,   167,   168,    24,    30,    70,    70,   131,   107,   125,
+      31,   173,    86,    32,    33,    43,   188,    34,   179,    48,
+      49,   122,   123,   108,    50,    38,   118,    39,    40,    41,
+      38,    86,    39,    40,   106,    51,    53,   192,    38,    91,
+      39,    40,   106,    90,    94,    13,    20,    21,    22,   107,
+      13,    13,    13,    98,    92,    86,    69,   153,    86,    95,
+     102,   105,   115,   121,   108,   130,   138,   140,   142,    93,
+     141,   149,   154,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,   169,   150,   170,   144,
+     164,   163,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,   171,   174,   181,   152,
+     -95,   -85,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,   185,   187,   189,   175,
+     194,   184,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,   156,    97,     0,     0,
+       0,     0,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,   160,     0,     0,     0,
+     148,     0,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,     0,     0,     0,     0,
+     166,     0,    69,    56,    57,    58,    59,    60,    61,    62,
+      63,    64,    65,    66,    67,    68,     0,    72,     0,     0,
+      73,    10,    69,    74,    75,    76,    77,    78,     0,    79,
+      80,    72,     0,     0,    73,    10,   117,    74,    75,    76,
+      77,    78,     0,    79,    80,    72,     0,     0,    73,    10,
+     143,    74,    75,    76,    77,    78,     0,    79,    80,    72,
+       0,     0,    73,    10,   145,    74,    75,    76,    77,    78,
+       0,    79,    80,    72,     0,     0,    73,    10,   172,    74,
+      75,    76,    77,    78,     0,    79,    80,    72,     0,     0,
+      73,    10,   191,    74,    75,    76,    77,    78,     0,    79,
+      80
 };
 
 static const yytype_int16 yycheck[] =
 {
-      54,    54,    86,    48,     8,     7,    51,    34,    78,     7,
-      80,    32,     0,    34,    59,    60,     9,    10,    11,    46,
-      47,    23,    25,    23,     7,    46,    47,     3,     4,     5,
-       6,     7,    86,   103,   104,   105,    23,   107,   108,   123,
-      94,    94,    22,   159,   128,    45,    22,   117,   102,   119,
-      42,    43,    22,    74,    12,    13,    14,   127,    45,     7,
-     176,    37,    42,    43,     7,   135,    26,    22,    24,   123,
-     186,    98,    99,    43,   128,    24,   146,    98,    99,   149,
-     125,   126,    12,   153,   154,     7,    12,    24,   142,   173,
-      12,    13,    14,   163,    12,    42,    42,    24,   182,    43,
-      12,     3,     4,     5,     6,     7,    25,   161,   161,     7,
-       3,     4,     5,     6,     7,    13,    14,    15,    16,   173,
-      22,    23,     7,    24,     3,   179,   179,    24,   182,    22,
-       3,     4,     5,     6,     7,    37,     3,     4,     5,     6,
-       7,     7,    12,    25,    37,    44,    12,    13,    14,    22,
-      25,     7,    12,     7,    22,    22,    10,    11,    22,    13,
-      14,    15,    16,    17,    37,    19,    20,    22,     7,    26,
-      37,    21,    25,    27,    28,    29,    30,    31,    32,    33,
-      34,    35,    36,    37,    38,    39,     7,    25,     3,    10,
-      11,    42,    13,    14,    15,    16,    17,    26,    19,    20,
-       7,    18,    25,    10,    11,    26,    13,    14,    15,    16,
-      17,    23,    19,    20,     7,    40,     3,    10,    11,    26,
-      13,    14,    15,    16,    17,   142,    19,    20,   168,   138,
-      74,    -1,    18,    26,    -1,    27,    28,    29,    30,    31,
-      32,    33,    34,    35,    36,    37,    38,    39,    -1,    -1,
-      -1,    -1,    44,    27,    28,    29,    30,    31,    32,    33,
-      34,    35,    36,    37,    38,    39,    -1,    23,    -1,    -1,
-      44,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    23,    -1,    -1,    -1,    27,    28,
-      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,    23,    -1,    -1,    -1,    27,    28,    29,    30,    31,
-      32,    33,    34,    35,    36,    37,    38,    39,    23,    -1,
-      -1,    -1,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    23,    -1,    -1,    -1,    27,
-      28,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    23,    -1,    -1,    -1,    27,    28,    29,    30,
-      31,    32,    33,    34,    35,    36,    37,    38,    39,    26,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,     7,    -1,    -1,    10,    11,    -1,    13,
-      14,    15,    16,    17,     7,    19,    20,    10,    11,    -1,
-      13,    14,    15,    16,    17,     7,    19,    20,    10,    11,
-      -1,    13,    14,    15,    16,    17,    -1,    19,    20,    27,
-      28,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39
+      50,    83,    91,    18,    23,    77,     7,    44,     8,    98,
+      47,     7,    23,    31,    32,    42,    43,    54,    55,    22,
+       0,   171,    23,    25,    42,    43,    45,    99,   100,   101,
+       7,   103,   104,    83,    45,   107,   108,   187,   120,    32,
+      43,    91,   124,     7,   194,     7,    22,    26,    98,    42,
+      43,     7,    70,   142,     9,    10,    11,    13,    14,    15,
+      16,     3,   134,     5,     6,     7,    42,    43,    22,     3,
+     120,     5,     6,     7,   124,   147,    94,    95,   150,   161,
+      22,   153,   154,    24,    12,   122,   123,   102,    22,    23,
+      42,   163,   142,    42,    24,    37,   185,    24,   170,    12,
+      12,    94,    95,    37,    25,     3,   188,     5,     6,     7,
+       3,   161,     5,     6,     7,    24,     7,   189,     3,    25,
+       5,     6,     7,    12,    22,     7,    12,    13,    14,    22,
+      12,    13,    14,    25,    24,   185,    46,    22,   188,    37,
+       7,     7,    22,    12,    37,    24,    22,     7,    25,    23,
+      22,    12,    37,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    23,    42,    21,    23,
+      43,    42,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    23,     3,    44,    23,
+      25,    18,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    25,    18,    40,    23,
+      23,   177,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,   137,    70,    -1,    -1,
+      -1,    -1,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,   141,    -1,    -1,    -1,
+      44,    -1,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    -1,    -1,    -1,    -1,
+      44,    -1,    46,    27,    28,    29,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    -1,     7,    -1,    -1,
+      10,    11,    46,    13,    14,    15,    16,    17,    -1,    19,
+      20,     7,    -1,    -1,    10,    11,    26,    13,    14,    15,
+      16,    17,    -1,    19,    20,     7,    -1,    -1,    10,    11,
+      26,    13,    14,    15,    16,    17,    -1,    19,    20,     7,
+      -1,    -1,    10,    11,    26,    13,    14,    15,    16,    17,
+      -1,    19,    20,     7,    -1,    -1,    10,    11,    26,    13,
+      14,    15,    16,    17,    -1,    19,    20,     7,    -1,    -1,
+      10,    11,    26,    13,    14,    15,    16,    17,    -1,    19,
+      20
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     8,    47,     7,    49,     0,    48,    25,     9,    10,
-      11,    50,    51,    52,    53,     7,    58,     7,     7,    26,
-      50,    50,    50,    22,    24,    81,    24,    81,     7,    23,
-      59,    12,    42,    12,    42,    24,    24,    57,    23,    45,
-      43,     3,     4,     5,     6,     7,    22,    37,    66,    70,
-      82,    66,    12,    12,    25,    24,    56,     7,     3,    66,
-      66,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    68,    55,     7,    13,    14,    15,
-      16,    17,    19,    20,    51,    52,    60,    62,    63,    71,
-      74,    75,    80,    12,    25,    24,    44,    23,    22,    37,
-      67,    70,    25,    22,    42,    43,     7,    22,    37,    64,
-      69,    71,    73,    82,    64,     7,    64,    22,    22,    22,
-      26,    62,    54,    60,    12,    66,    66,    16,    60,    61,
-      23,    64,    72,    64,    64,    43,    64,    64,    68,    64,
-       7,    64,    25,    26,    23,    64,    16,    26,    23,    45,
-      44,    64,    23,    22,    37,    65,    69,    23,    21,    23,
-      61,    64,    64,    42,    44,    64,    64,    77,    78,    79,
-       3,    77,    26,    60,    64,    23,    18,     7,    63,    25,
-      40,    77,    60,     3,    26,    23,    76,    77
+       0,     8,    48,     7,    50,     0,    49,    25,     9,    10,
+      11,    51,    52,    54,    55,     7,    60,     7,     7,    26,
+      51,    51,    51,    22,    24,    91,    91,     7,    23,    61,
+      12,    42,    42,    24,    24,    59,    23,    45,     3,     5,
+       6,     7,    22,    37,    69,    73,    92,    69,    12,    12,
+      25,    24,    58,     7,    69,    69,    27,    28,    29,    30,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    46,
+      71,    57,     7,    10,    13,    14,    15,    16,    17,    19,
+      20,    53,    54,    62,    63,    64,    74,    77,    81,    89,
+      12,    25,    24,    23,    22,    37,    70,    73,    25,    22,
+      42,    43,     7,    65,    66,     7,     7,    22,    37,    67,
+      72,    74,    76,    92,    78,    22,    82,    26,    63,    56,
+      62,    12,    69,    69,    62,    23,    67,    75,    67,    67,
+      24,    91,    67,    67,    43,    67,    67,    71,    22,    79,
+       7,    22,    25,    26,    23,    26,    23,    45,    44,    12,
+      42,    67,    23,    22,    37,    68,    72,    67,    90,    83,
+      90,    62,    67,    42,    43,    67,    44,    67,    67,    23,
+      21,    23,    26,    67,     3,    23,    86,    87,    88,    67,
+      86,    44,    80,     7,    64,    25,    84,    18,    62,    40,
+      86,    26,    67,    85,    23,    86
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    46,    48,    47,    49,    50,    50,    50,    50,    51,
-      51,    51,    52,    54,    53,    55,    53,    56,    53,    57,
-      53,    58,    59,    59,    60,    60,    61,    61,    61,    62,
-      62,    62,    62,    62,    62,    63,    63,    63,    63,    63,
-      63,    63,    64,    64,    64,    64,    65,    65,    65,    66,
-      66,    66,    66,    67,    67,    67,    68,    68,    68,    68,
-      68,    68,    68,    68,    68,    68,    68,    68,    68,    69,
-      69,    69,    69,    70,    70,    71,    71,    72,    72,    73,
-      74,    74,    75,    76,    75,    78,    77,    79,    77,    80,
-      81,    81,    82,    82,    82,    82
+       0,    47,    49,    48,    50,    51,    51,    51,    51,    52,
+      52,    53,    53,    53,    54,    56,    55,    57,    55,    58,
+      55,    59,    55,    60,    61,    61,    62,    62,    63,    63,
+      63,    63,    63,    63,    64,    64,    65,    64,    66,    64,
+      64,    64,    64,    67,    67,    67,    67,    68,    68,    68,
+      69,    69,    69,    69,    70,    70,    70,    71,    71,    71,
+      71,    71,    71,    71,    71,    71,    71,    71,    71,    71,
+      71,    72,    72,    72,    72,    73,    73,    74,    74,    75,
+      75,    76,    78,    77,    79,    80,    79,    82,    81,    83,
+      84,    85,    81,    87,    86,    88,    86,    89,    90,    91,
+      91,    92,    92,    92
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     0,     6,     1,     2,     2,     2,     0,     3,
-       5,     7,     5,     0,    11,     0,    10,     0,     9,     0,
-       8,     1,     5,     3,     2,     1,     4,     3,     2,     1,
-       1,     1,     1,     1,     1,     3,     6,     2,     2,     2,
-       2,     1,     2,     3,     3,     1,     2,     3,     1,     2,
-       3,     3,     1,     2,     3,     1,     1,     1,     1,     1,
+       5,     3,     5,     7,     5,     0,    11,     0,    10,     0,
+       9,     0,     8,     1,     5,     3,     2,     1,     1,     1,
+       1,     1,     1,     1,     3,     6,     0,     3,     0,     3,
+       2,     2,     1,     2,     3,     3,     1,     2,     3,     1,
+       2,     3,     3,     1,     2,     3,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     1,     4,     3,     3,     1,     4,
-       5,     7,     5,     0,    10,     0,     2,     0,     4,     1,
-       2,     0,     1,     1,     1,     1
+       1,     1,     1,     1,     1,     1,     1,     4,     3,     3,
+       1,     4,     0,     3,     4,     0,     7,     0,     6,     0,
+       0,     0,    12,     0,     2,     0,     4,     1,     1,     2,
+       0,     1,     1,     1
 };
 
 
@@ -1615,16 +1749,18 @@ yyreduce:
   switch (yyn)
     {
   case 2:
-#line 116 "d.y"
+#line 255 "d.y"
                                                {
-			 	// Create a new symbol table befoer entering the classBlock
-			 	createNewTable();
+			 	// Create a new symbol table before entering the classBlock
+			 	createNewTable(1);
+				printTheStartOfClassDeclaration((yyvsp[0].identifierName));
+				className = (yyvsp[0].identifierName);
 			 }
-#line 1624 "y.tab.c"
+#line 1760 "y.tab.c"
     break;
 
   case 3:
-#line 119 "d.y"
+#line 260 "d.y"
                                               {
 				// Pop a symbol table before leaving the classBlock
 				TableNode* tableNode = lookUpInThisScope("main");
@@ -1635,21 +1771,69 @@ yyreduce:
 					yyerror("\"main\" is not a function");
 				}
 				popTable();
+				printTheEndOfClassDeclaration();
 			 }
-#line 1640 "y.tab.c"
+#line 1777 "y.tab.c"
     break;
 
   case 4:
-#line 132 "d.y"
+#line 274 "d.y"
                                                                     { 
 							 	// Insert the class identifier into the current symbol table
-								insert((yyvsp[0].identifierName), NODE_CLASS, -1, NULL, 0, 0); 
+								insert((yyvsp[0].identifierName), NODE_CLASS, -1, NULL, 0, 0, 0); 
+								(yyval.identifierName) = (yyvsp[0].identifierName);
 							 }
-#line 1649 "y.tab.c"
+#line 1787 "y.tab.c"
     break;
 
   case 9:
-#line 144 "d.y"
+#line 287 "d.y"
+                                                                                                                     {
+													// Check if there's already an identical identifier name in the current symbol table
+													if (lookUpInThisScope((yyvsp[-1].identifierName)) != NULL) {
+														yyerrorForIdentifierDuplicated((yyvsp[-1].identifierName));
+													}
+													else {
+														// Check if there's a type definition. If not, the default type is integer. 
+														TableNode* node;
+														if ((yyvsp[0].intValue) != -1) {
+															node = insert((yyvsp[-1].identifierName), (yyvsp[0].intValue), -1, NULL, 0, 0, 0);
+															printGlobalVariableDeclarationWithoutValue(node -> string, (yyvsp[0].intValue));
+														}
+														else {
+															node = insert((yyvsp[-1].identifierName), NODE_INT, -1, NULL, 0, 0, 0);
+															printGlobalVariableDeclarationWithoutValue(node -> string, NODE_INT);
+														}
+													}
+												 }
+#line 1810 "y.tab.c"
+    break;
+
+  case 10:
+#line 305 "d.y"
+                                                                                                                                              {
+													// Check if there's a type definition. If not, its type is recognized from constantExpression
+													if ((yyvsp[-2].intValue) == -1) {
+														(yyvsp[-2].intValue) = (yyvsp[0].node) -> type;
+													}
+													// Check if the type is matched, then check if there's already an identical identifier name in the current symbol table
+													if ((yyvsp[-2].intValue) != (yyvsp[0].node) -> type) {
+														yyerror("Type not matched.");
+													}
+													else if (lookUpInThisScope((yyvsp[-3].identifierName)) != NULL) {
+														yyerrorForIdentifierDuplicated((yyvsp[-3].identifierName));
+													}
+													else {
+														TableNode* node = insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 0, 0);
+														printGlobalVariableDeclaration(node -> string, (yyvsp[-2].intValue), (yyvsp[0].node) -> value);
+													}
+													free((yyvsp[0].node));
+												 }
+#line 1833 "y.tab.c"
+    break;
+
+  case 11:
+#line 324 "d.y"
                                                                                              {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-1].identifierName)) != NULL) {
@@ -1657,20 +1841,24 @@ yyreduce:
 										}
 										else {
 											// Check if there's a type definition. If not, the default type is integer. 
+											TableNode* node;
 											if ((yyvsp[0].intValue) != -1) {
-												insert((yyvsp[-1].identifierName), (yyvsp[0].intValue), -1, NULL, 0, 0);
+												node = insert((yyvsp[-1].identifierName), (yyvsp[0].intValue), -1, NULL, 0, 0, 0);
+												printZeroToInitializeIt((yyvsp[0].intValue));
 											}
 											else {
-												insert((yyvsp[-1].identifierName), NODE_INT, -1, NULL, 0, 0);
+												node = insert((yyvsp[-1].identifierName), NODE_INT, -1, NULL, 0, 0, 0);
+												printZeroToInitializeIt(NODE_INT);
 											}
+											printLocalVariableDeclaration(node -> index);
 										}
 									 }
-#line 1669 "y.tab.c"
+#line 1857 "y.tab.c"
     break;
 
-  case 10:
-#line 159 "d.y"
-                                                                                                                      {
+  case 12:
+#line 343 "d.y"
+                                                                                                              {
 									 	// Check if there's a type definition. If not, its type is recognized from constantExpression
 									 	if ((yyvsp[-2].intValue) == -1) {
 											(yyvsp[-2].intValue) = (yyvsp[0].intValue);
@@ -1683,189 +1871,183 @@ yyreduce:
 											yyerrorForIdentifierDuplicated((yyvsp[-3].identifierName));
 										}
 										else {
-											insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 0);
+											TableNode* node = insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 0, 0);
+											printLocalVariableDeclaration(node -> index);
 										}
 									 }
-#line 1690 "y.tab.c"
+#line 1879 "y.tab.c"
     break;
 
-  case 11:
-#line 175 "d.y"
+  case 13:
+#line 360 "d.y"
                                                                                                                    {
 									 	// Check if there's already an identical identifier name in the current symbol table
 										if (lookUpInThisScope((yyvsp[-5].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-5].identifierName));
 										}
 										else {
-											insert((yyvsp[-5].identifierName), NODE_ARRAY, (yyvsp[-3].intValue), NULL, 0, 0);
+											insert((yyvsp[-5].identifierName), NODE_ARRAY, (yyvsp[-3].intValue), NULL, 0, 0, 0);
 										}
 									 }
-#line 1704 "y.tab.c"
+#line 1893 "y.tab.c"
     break;
 
-  case 12:
-#line 186 "d.y"
+  case 14:
+#line 371 "d.y"
                                                                                                                     {
 									 	// Check if there's a type definition. If not, its type is recognized from constantExpression
 									 	if ((yyvsp[-2].intValue) == -1) {
-											(yyvsp[-2].intValue) = (yyvsp[0].intValue);
+											(yyvsp[-2].intValue) = (yyvsp[0].node) -> type;
 										}
 										// Check if the type is matched, then check if there's already an identical identifier name in the current symbol table
-										if ((yyvsp[-2].intValue) != (yyvsp[0].intValue)) {
+										if ((yyvsp[-2].intValue) != (yyvsp[0].node) -> type) {
 											yyerror("Type not matched.");
 										}
 										else if (lookUpInThisScope((yyvsp[-3].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-3].identifierName));
 										}
 										else {
-											insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 1);
+											insert((yyvsp[-3].identifierName), (yyvsp[-2].intValue), -1, NULL, 0, 1, (yyvsp[0].node) -> value);
 										}
+										free((yyvsp[0].node));
 									 }
-#line 1725 "y.tab.c"
+#line 1915 "y.tab.c"
     break;
 
-  case 13:
-#line 204 "d.y"
+  case 15:
+#line 390 "d.y"
                                                                                                                                  {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-5].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-5].identifierName));
 										}
 										else {
-											insert((yyvsp[-5].identifierName), NODE_FUNCTION_WITH_RETURN_VALUE, (yyvsp[0].intValue), (yyvsp[-3].arguments) -> argumentTypes, (yyvsp[-3].arguments) -> argumentNum, 0);
+											insert((yyvsp[-5].identifierName), NODE_FUNCTION_WITH_RETURN_VALUE, (yyvsp[0].intValue), (yyvsp[-3].arguments) -> argumentTypes, (yyvsp[-3].arguments) -> argumentNum, 0, 0);
 										}
 										// Create a new symbol table for formalArguments and the following returnBlock
-										createNewTable();
+										createNewTable(0);
 										// Get the arguments' definition from formalArguments and insert them into the current symbol table
 										for (int i = 0; i < (yyvsp[-3].arguments) -> argumentNum; i++) {
 											if (lookUpInThisScope((yyvsp[-3].arguments) -> argumentNames[i]) != NULL) {
 												yyerrorForIdentifierDuplicated((yyvsp[-3].arguments) -> argumentNames[i]);
 											}
 											else {
-												insert((yyvsp[-3].arguments) -> argumentNames[i], (yyvsp[-3].arguments) -> argumentTypes[i], -1, NULL, 0, 0);
+												insert((yyvsp[-3].arguments) -> argumentNames[i], (yyvsp[-3].arguments) -> argumentTypes[i], -1, NULL, 0, 0, 0);
 											}
 										}
+										printTheStartOfFunctionDeclaration((yyvsp[-5].identifierName), (yyvsp[0].intValue), (yyvsp[-3].arguments));
 									 }
-#line 1750 "y.tab.c"
+#line 1941 "y.tab.c"
     break;
 
-  case 14:
-#line 223 "d.y"
-                                                                                               {
-									 	// Check if there's a type definition. If not, its type is recognized from returnBlock
-									 	if ((yyvsp[-4].intValue) == -1) {
-											(yyvsp[-4].intValue) = (yyvsp[-1].intValue);
-										}
-										// Check if the type definition is the same as returnBlock
-										if ((yyvsp[-4].intValue) != (yyvsp[-1].intValue)) {
-											yyerror("Function return type not matched. ");
-										}
+  case 16:
+#line 410 "d.y"
+                                                                                         {
 										// Pop the current symbol table before leaving this scope
 										popTable();
+										printTheEndOfFunctionDeclaration(0);
 									 }
-#line 1767 "y.tab.c"
+#line 1951 "y.tab.c"
     break;
 
-  case 15:
-#line 235 "d.y"
+  case 17:
+#line 415 "d.y"
                                                                                                                    {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-4].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-4].identifierName));
 										}
 										else {
-											insert((yyvsp[-4].identifierName), NODE_FUNCTION_WITH_RETURN_VALUE, (yyvsp[0].intValue), NULL, 0, 0);
+											insert((yyvsp[-4].identifierName), NODE_FUNCTION_WITH_RETURN_VALUE, (yyvsp[0].intValue), NULL, 0, 0, 0);
 										}
 										// Create a new symbol table for the following returnBlock
-										createNewTable();
+										createNewTable(0);
+										printTheStartOfFunctionDeclaration((yyvsp[-4].identifierName), (yyvsp[0].intValue), NULL);
 									 }
-#line 1783 "y.tab.c"
+#line 1968 "y.tab.c"
     break;
 
-  case 16:
-#line 245 "d.y"
-                                                                                               {
-									 	// Check if there's a type definition. If not, its type is recognized from returnBlock
-									 	if ((yyvsp[-4].intValue) == -1) {
-											(yyvsp[-4].intValue) = (yyvsp[-1].intValue);
-										}
-										// Check if the type definition is the same as returnBlock
-										if ((yyvsp[-4].intValue) != (yyvsp[-1].intValue)) {
-											yyerror("Function return type not matched. ");
-										}
+  case 18:
+#line 426 "d.y"
+                                                                                         {
 										// Pop the current symbol table before leaving this scope
 									 	popTable();
+										printTheEndOfFunctionDeclaration(0);
 									 }
-#line 1800 "y.tab.c"
+#line 1978 "y.tab.c"
     break;
 
-  case 17:
-#line 257 "d.y"
+  case 19:
+#line 431 "d.y"
                                                                                                                           {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-3].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-3].identifierName));
 										}
 										else {
-											insert((yyvsp[-3].identifierName), NODE_FUNCTION_WITH_NO_RETURN_VALUE, -1, (yyvsp[-1].arguments) -> argumentTypes, (yyvsp[-1].arguments) -> argumentNum, 0);
+											insert((yyvsp[-3].identifierName), NODE_FUNCTION_WITH_NO_RETURN_VALUE, -1, (yyvsp[-1].arguments) -> argumentTypes, (yyvsp[-1].arguments) -> argumentNum, 0, 0);
 										}
 										// Create a new symbol table for the following returnBlock
-										createNewTable();
+										createNewTable(0);
 										// Get the arguments' definition from formalArguments and insert them into the current symbol table
 										for (int i = 0; i < (yyvsp[-1].arguments) -> argumentNum; i++) {
 											if (lookUpInThisScope((yyvsp[-1].arguments) -> argumentNames[i]) != NULL) {
 												yyerrorForIdentifierDuplicated((yyvsp[-1].arguments) -> argumentNames[i]);
 											}
 											else {
-												insert((yyvsp[-1].arguments) -> argumentNames[i], (yyvsp[-1].arguments) -> argumentTypes[i], -1, NULL, 0, 0);
+												insert((yyvsp[-1].arguments) -> argumentNames[i], (yyvsp[-1].arguments) -> argumentTypes[i], -1, NULL, 0, 0, 0);
 											}
 										}
+										printTheStartOfFunctionDeclaration((yyvsp[-3].identifierName), -1, (yyvsp[-1].arguments));
 									 }
-#line 1825 "y.tab.c"
+#line 2004 "y.tab.c"
     break;
 
-  case 18:
-#line 276 "d.y"
+  case 20:
+#line 451 "d.y"
                                                                                          {
 									 	// Pop the current symbol table before leaving this scope
 										popTable();
+										printTheEndOfFunctionDeclaration(1);
 									 }
-#line 1834 "y.tab.c"
+#line 2014 "y.tab.c"
     break;
 
-  case 19:
-#line 280 "d.y"
+  case 21:
+#line 456 "d.y"
                                                                                                           {
 									 	// Check if there's already an identical identifier name in the current symbol table
 									 	if (lookUpInThisScope((yyvsp[-2].identifierName)) != NULL) {
 											yyerrorForIdentifierDuplicated((yyvsp[-2].identifierName));
 										}
 										else {
-											insert((yyvsp[-2].identifierName), NODE_FUNCTION_WITH_NO_RETURN_VALUE, -1, NULL, 0, 0);
+											insert((yyvsp[-2].identifierName), NODE_FUNCTION_WITH_NO_RETURN_VALUE, -1, NULL, 0, 0, 0);
 										}
 										// Create a new symbol table for the following returnBlock
-										createNewTable();
+										createNewTable(0);
+										printTheStartOfFunctionDeclaration((yyvsp[-2].identifierName), -1, NULL);
 									 }
-#line 1850 "y.tab.c"
-    break;
-
-  case 20:
-#line 290 "d.y"
-                                                                                         {
-									 	// Pop the current symbol table before leaving this scope
-									 	popTable();
-									 }
-#line 1859 "y.tab.c"
-    break;
-
-  case 21:
-#line 296 "d.y"
-                                                                                   { (yyval.identifierName) = (yyvsp[0].identifierName); }
-#line 1865 "y.tab.c"
+#line 2031 "y.tab.c"
     break;
 
   case 22:
-#line 299 "d.y"
+#line 467 "d.y"
+                                                                                         {
+									 	// Pop the current symbol table before leaving this scope
+									 	popTable();
+										printTheEndOfFunctionDeclaration(1);
+									 }
+#line 2041 "y.tab.c"
+    break;
+
+  case 23:
+#line 474 "d.y"
+                                                                                   { (yyval.identifierName) = (yyvsp[0].identifierName); }
+#line 2047 "y.tab.c"
+    break;
+
+  case 24:
+#line 477 "d.y"
                                                                                                  {
 							 	// Store all the arguments information and return it
 							 	char** previousArgumentNames = (yyvsp[-4].arguments) -> argumentNames;
@@ -1891,11 +2073,11 @@ yyreduce:
 									free((yyvsp[-4].arguments));
 								}
 							 }
-#line 1895 "y.tab.c"
+#line 2077 "y.tab.c"
     break;
 
-  case 23:
-#line 324 "d.y"
+  case 25:
+#line 502 "d.y"
                                                                                {
 							 	// Store the argument information and return it
 							 	(yyval.arguments) = (Arguments*)malloc(sizeof(Arguments));
@@ -1905,50 +2087,30 @@ yyreduce:
 								(yyval.arguments) -> argumentTypes[0] = (yyvsp[0].intValue);
 								(yyval.arguments) -> argumentNum = 1;
 							 }
-#line 1909 "y.tab.c"
+#line 2091 "y.tab.c"
     break;
 
-  case 26:
-#line 339 "d.y"
-                                                                       {
-					 	(yyval.intValue) = (yyvsp[-1].intValue);
-					 }
-#line 1917 "y.tab.c"
-    break;
-
-  case 27:
-#line 342 "d.y"
-                                                                    {
-					 	(yyval.intValue) = (yyvsp[0].intValue);
-					 }
-#line 1925 "y.tab.c"
-    break;
-
-  case 28:
-#line 345 "d.y"
-                                                             {
-					 	(yyval.intValue) = (yyvsp[0].intValue);
-					 }
-#line 1933 "y.tab.c"
-    break;
-
-  case 35:
-#line 358 "d.y"
+  case 34:
+#line 525 "d.y"
                                                   {
 				// Check if the identifier exists, and check if the type is not matched. 
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[-2].identifierName));
 				if (tableNode == NULL) {
 					yyerrorForIdentifierNotFound((yyvsp[-2].identifierName));
 				}
+				if (tableNode -> constant == 1) {
+					yyerror("Constant can't be assigned.");
+				}
 				else if (tableNode -> type != (yyvsp[0].intValue)) {
 					yyerror("Type not matched.");
 				}
+				printAssignVariable(tableNode);
 			}
-#line 1948 "y.tab.c"
+#line 2110 "y.tab.c"
     break;
 
-  case 36:
-#line 368 "d.y"
+  case 35:
+#line 539 "d.y"
                                                                        {
 				// Check if the identifier exists, and check if the type is not matched, and check if the identifier between '[' and ']' is an integer
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[-5].identifierName));
@@ -1965,11 +2127,43 @@ yyreduce:
 					yyerror("Type not matched.");
 				}
 			}
-#line 1969 "y.tab.c"
+#line 2131 "y.tab.c"
+    break;
+
+  case 36:
+#line 555 "d.y"
+                                {
+				printPreparationForPrint();
+			}
+#line 2139 "y.tab.c"
+    break;
+
+  case 37:
+#line 557 "d.y"
+                                     {
+				printPrinting((yyvsp[0].intValue), 0);
+			}
+#line 2147 "y.tab.c"
+    break;
+
+  case 38:
+#line 560 "d.y"
+                                  {
+				printPreparationForPrint();
+			}
+#line 2155 "y.tab.c"
     break;
 
   case 39:
-#line 386 "d.y"
+#line 562 "d.y"
+                                     {
+				printPrinting((yyvsp[0].intValue), 1);
+			}
+#line 2163 "y.tab.c"
+    break;
+
+  case 40:
+#line 565 "d.y"
                                           {
 				// Check if the identifier exists
 				TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -1977,233 +2171,327 @@ yyreduce:
 					yyerrorForIdentifierNotFound((yyvsp[0].identifierName));
 				}
 			}
-#line 1981 "y.tab.c"
+#line 2175 "y.tab.c"
+    break;
+
+  case 41:
+#line 572 "d.y"
+                                            {
+				printReturnVariable();
+			}
+#line 2183 "y.tab.c"
     break;
 
   case 42:
-#line 397 "d.y"
-                                                                    {
-					 (yyval.intValue) = (yyvsp[0].intValue);
-				  }
-#line 1989 "y.tab.c"
+#line 575 "d.y"
+                                 {
+				printReturn();
+			}
+#line 2191 "y.tab.c"
     break;
 
   case 43:
-#line 400 "d.y"
+#line 580 "d.y"
+                                                                    {
+					 (yyval.intValue) = (yyvsp[0].intValue);
+					 printUminus();
+				  }
+#line 2200 "y.tab.c"
+    break;
+
+  case 44:
+#line 584 "d.y"
                                                                               {
 						// Check if the types of the two sides match
 						if ((yyvsp[-2].intValue) != (yyvsp[0].intValue)) {
 							yyerror("Type not matched.");
 						}
 						else {
-							// If the operator return -1, it means the return value of this expression is the same as the type of the two sides
-							if ((yyvsp[-1].intValue) != -1) {
-								(yyval.intValue) = (yyvsp[-1].intValue);
-							}
-							else {
+							if ((yyvsp[-1].intValue) <= OPERATOR_REM) {
 								(yyval.intValue) = (yyvsp[-2].intValue);
 							}
+							else {
+								(yyval.intValue) = NODE_BOOL;
+							}
 						}
+						printOperator((yyvsp[-1].intValue));
 					}
-#line 2009 "y.tab.c"
-    break;
-
-  case 44:
-#line 415 "d.y"
-                                                             {
-						(yyval.intValue) = (yyvsp[-1].intValue);
-					}
-#line 2017 "y.tab.c"
+#line 2220 "y.tab.c"
     break;
 
   case 45:
-#line 418 "d.y"
+#line 599 "d.y"
                                                              {
-						(yyval.intValue) = (yyvsp[0].intValue);
+						(yyval.intValue) = (yyvsp[-1].intValue);
 					}
-#line 2025 "y.tab.c"
+#line 2228 "y.tab.c"
     break;
 
   case 46:
-#line 423 "d.y"
-                                                                                     {
-							 	(yyval.intValue) = (yyvsp[0].intValue);
-							 }
-#line 2033 "y.tab.c"
+#line 602 "d.y"
+                                                             {
+						(yyval.intValue) = (yyvsp[0].intValue);
+					}
+#line 2236 "y.tab.c"
     break;
 
   case 47:
-#line 426 "d.y"
-                                                                              {
-							 	(yyval.intValue) = (yyvsp[-1].intValue);
+#line 607 "d.y"
+                                                                                     {
+							 	(yyval.intValue) = (yyvsp[0].intValue);
+								printUminus();
 							 }
-#line 2041 "y.tab.c"
+#line 2245 "y.tab.c"
     break;
 
   case 48:
-#line 429 "d.y"
+#line 611 "d.y"
                                                                               {
-							 	(yyval.intValue) = (yyvsp[0].intValue);
+							 	(yyval.intValue) = (yyvsp[-1].intValue);
 							 }
-#line 2049 "y.tab.c"
+#line 2253 "y.tab.c"
     break;
 
   case 49:
-#line 434 "d.y"
-                                                                                                            {
-									 (yyval.intValue) = (yyvsp[0].intValue);
-									}
-#line 2057 "y.tab.c"
+#line 614 "d.y"
+                                                                              {
+							 	(yyval.intValue) = (yyvsp[0].intValue);
+							 }
+#line 2261 "y.tab.c"
     break;
 
   case 50:
-#line 437 "d.y"
-                                                                                                                              {
-										// Check if the types of the two sides match
-										if ((yyvsp[-2].intValue) != (yyvsp[0].intValue)) {
-											yyerror("Type not matched.");
-										}
-										else {
-											// If the operator return -1, it means the type of this expression is the same as the types of the two sides
-											if ((yyvsp[-1].intValue) != -1) {
-												(yyval.intValue) = (yyvsp[-1].intValue);
-											}
-											else {
-												(yyval.intValue) = (yyvsp[-2].intValue);
-											}
-										}
+#line 619 "d.y"
+                                                                                                            {
+									 (yyval.node) = (yyvsp[0].node);
+									 (yyval.node) -> value *= -1;
 									}
-#line 2077 "y.tab.c"
+#line 2270 "y.tab.c"
     break;
 
   case 51:
-#line 452 "d.y"
-                                                                                                     {
-										(yyval.intValue) = (yyvsp[-1].intValue);
+#line 623 "d.y"
+                                                                                                                              {
+										// Check if the types of the two sides match
+										if ((yyvsp[-2].node) -> type != (yyvsp[0].node) -> type) {
+											yyerror("Type not matched.");
+										}
+										else {
+											int operator = (yyvsp[-1].intValue);
+											(yyval.node) = (yyvsp[-2].node);
+
+											switch (operator) {
+											case OPERATOR_ADD:
+												(yyval.node) -> value += (yyvsp[0].node) -> value;
+												break;
+
+											case OPERATOR_SUB:
+												(yyval.node) -> value -= (yyvsp[0].node) -> value;
+												break;
+
+											case OPERATOR_MUL:
+												(yyval.node) -> value *= (yyvsp[0].node) -> value;
+												break;
+
+											case OPERATOR_DIV:
+												(yyval.node) -> value /= (yyvsp[0].node) -> value;
+												break;
+
+											case OPERATOR_REM:
+												(yyval.node) -> value %= (yyvsp[0].node) -> value;
+												break;
+
+											case OPERATOR_AND:
+												(yyval.node) -> value = (yyval.node) -> value && (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_OR:
+												(yyval.node) -> value = (yyval.node) -> value || (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_XOR:
+												(yyval.node) -> value = (yyval.node) -> value != (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_LT:
+												(yyval.node) -> value = (yyval.node) -> value < (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_GE:
+												(yyval.node) -> value = (yyval.node) -> value >= (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_LE:
+												(yyval.node) -> value = (yyval.node) -> value <= (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_EQ:
+												(yyval.node) -> value = (yyval.node) -> value == (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_NE:
+												(yyval.node) -> value = (yyval.node) -> value != (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+
+											case OPERATOR_GT:
+												(yyval.node) -> value = (yyval.node) -> value > (yyvsp[0].node) -> value;
+												(yyval.node) -> type = NODE_BOOL;
+												break;
+											}
+											free((yyvsp[0].node));
+										}
 									}
-#line 2085 "y.tab.c"
+#line 2353 "y.tab.c"
     break;
 
   case 52:
-#line 455 "d.y"
+#line 701 "d.y"
                                                                                                      {
-										(yyval.intValue) = (yyvsp[0].intValue);
+										(yyval.node) = (yyvsp[-1].node);
 									}
-#line 2093 "y.tab.c"
+#line 2361 "y.tab.c"
     break;
 
   case 53:
-#line 460 "d.y"
-                                                                                                                             {
-											 	(yyval.intValue) = (yyvsp[0].intValue);
-											 }
-#line 2101 "y.tab.c"
+#line 704 "d.y"
+                                                                                                     {
+										(yyval.node) = (yyvsp[0].node);
+									}
+#line 2369 "y.tab.c"
     break;
 
   case 54:
-#line 463 "d.y"
-                                                                                                                      {
-											 	(yyval.intValue) = (yyvsp[-1].intValue);
+#line 709 "d.y"
+                                                                                                                             {
+											 	(yyval.node) = (yyvsp[0].node);
+												(yyval.node) -> value *= -1;
 											 }
-#line 2109 "y.tab.c"
+#line 2378 "y.tab.c"
     break;
 
   case 55:
-#line 466 "d.y"
+#line 713 "d.y"
                                                                                                                       {
-											 	(yyval.intValue) = (yyvsp[0].intValue);
+											 	(yyval.node) = (yyvsp[-1].node);
 											 }
-#line 2117 "y.tab.c"
+#line 2386 "y.tab.c"
     break;
 
   case 56:
-#line 471 "d.y"
-                                     { (yyval.intValue) = -1; }
-#line 2123 "y.tab.c"
+#line 716 "d.y"
+                                                                                                                      {
+											 	(yyval.node) = (yyvsp[0].node);
+											 }
+#line 2394 "y.tab.c"
     break;
 
   case 57:
-#line 472 "d.y"
-                                       { (yyval.intValue) = -1; }
-#line 2129 "y.tab.c"
+#line 721 "d.y"
+                                     { (yyval.intValue) = OPERATOR_ADD; }
+#line 2400 "y.tab.c"
     break;
 
   case 58:
-#line 473 "d.y"
-                                       { (yyval.intValue) = -1; }
-#line 2135 "y.tab.c"
+#line 722 "d.y"
+                                       { (yyval.intValue) = OPERATOR_SUB; }
+#line 2406 "y.tab.c"
     break;
 
   case 59:
-#line 474 "d.y"
-                                       { (yyval.intValue) = -1; }
-#line 2141 "y.tab.c"
+#line 723 "d.y"
+                                       { (yyval.intValue) = OPERATOR_MUL; }
+#line 2412 "y.tab.c"
     break;
 
   case 60:
-#line 475 "d.y"
-                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2147 "y.tab.c"
+#line 724 "d.y"
+                                       { (yyval.intValue) = OPERATOR_DIV; }
+#line 2418 "y.tab.c"
     break;
 
   case 61:
-#line 476 "d.y"
-                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2153 "y.tab.c"
+#line 725 "d.y"
+                                       { (yyval.intValue) = OPERATOR_REM; }
+#line 2424 "y.tab.c"
     break;
 
   case 62:
-#line 477 "d.y"
-                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2159 "y.tab.c"
+#line 726 "d.y"
+                                       { (yyval.intValue) = OPERATOR_AND; }
+#line 2430 "y.tab.c"
     break;
 
   case 63:
-#line 478 "d.y"
-                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2165 "y.tab.c"
+#line 727 "d.y"
+                                       { (yyval.intValue) = OPERATOR_OR; }
+#line 2436 "y.tab.c"
     break;
 
   case 64:
-#line 479 "d.y"
-                                      { (yyval.intValue) = NODE_BOOL; }
-#line 2171 "y.tab.c"
+#line 728 "d.y"
+                                       { (yyval.intValue) = OPERATOR_XOR; }
+#line 2442 "y.tab.c"
     break;
 
   case 65:
-#line 480 "d.y"
-                                      { (yyval.intValue) = NODE_BOOL; }
-#line 2177 "y.tab.c"
+#line 729 "d.y"
+                                       { (yyval.intValue) = OPERATOR_LT; }
+#line 2448 "y.tab.c"
     break;
 
   case 66:
-#line 481 "d.y"
-                                      { (yyval.intValue) = NODE_BOOL; }
-#line 2183 "y.tab.c"
+#line 730 "d.y"
+                                      { (yyval.intValue) = OPERATOR_GE; }
+#line 2454 "y.tab.c"
     break;
 
   case 67:
-#line 482 "d.y"
-                                      { (yyval.intValue) = NODE_BOOL; }
-#line 2189 "y.tab.c"
+#line 731 "d.y"
+                                      { (yyval.intValue) = OPERATOR_LE; }
+#line 2460 "y.tab.c"
     break;
 
   case 68:
-#line 483 "d.y"
-                                       { (yyval.intValue) = NODE_BOOL; }
-#line 2195 "y.tab.c"
+#line 732 "d.y"
+                                      { (yyval.intValue) = OPERATOR_EQ; }
+#line 2466 "y.tab.c"
     break;
 
   case 69:
-#line 486 "d.y"
-                                                                              {
-										(yyval.intValue) = (yyvsp[0].intValue);
-									}
-#line 2203 "y.tab.c"
+#line 733 "d.y"
+                                      { (yyval.intValue) = OPERATOR_NE; }
+#line 2472 "y.tab.c"
     break;
 
   case 70:
-#line 489 "d.y"
+#line 734 "d.y"
+                                       { (yyval.intValue) = OPERATOR_GT; }
+#line 2478 "y.tab.c"
+    break;
+
+  case 71:
+#line 737 "d.y"
+                                                                              {
+										(yyval.intValue) = (yyvsp[0].node) -> type;
+										if ((yyvsp[0].node) -> type == NODE_STRING) {
+											printLoadingString((yyvsp[0].node) -> stringValue);
+										} else {
+											printValue((yyvsp[0].node) -> type, (yyvsp[0].node) -> value);
+										}
+									}
+#line 2491 "y.tab.c"
+    break;
+
+  case 72:
+#line 745 "d.y"
                                                                                      {
 										// Check if the identifier exists
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -2213,12 +2501,21 @@ yyreduce:
 										else {
 											(yyval.intValue) = tableNode -> type;
 										}
+										if (tableNode -> constant == 1) {
+											printValue(tableNode -> type, tableNode -> constantValue);
+										} else if (tableNode -> constant == 0) {
+											if (tableNode -> global == 1) {
+												printLoadingGlobalVariable(tableNode -> string, tableNode -> type);
+											} else if (tableNode -> global == 0) {
+												printLoadingLocalVariable(tableNode -> index);
+											}
+										}
 									}
-#line 2218 "y.tab.c"
+#line 2515 "y.tab.c"
     break;
 
-  case 71:
-#line 499 "d.y"
+  case 73:
+#line 764 "d.y"
                                                                                              {
 										// Check if the function has a return type
 										if ((yyvsp[0].intValue) == -1) {
@@ -2228,27 +2525,27 @@ yyreduce:
 											(yyval.intValue) = (yyvsp[0].intValue);
 										}
 									}
-#line 2232 "y.tab.c"
-    break;
-
-  case 72:
-#line 508 "d.y"
-                                                                                         {
-										(yyval.intValue) = (yyvsp[0].intValue);
-									}
-#line 2240 "y.tab.c"
-    break;
-
-  case 73:
-#line 513 "d.y"
-                                                                                                              {
-														(yyval.intValue) = (yyvsp[0].intValue);
-													}
-#line 2248 "y.tab.c"
+#line 2529 "y.tab.c"
     break;
 
   case 74:
-#line 516 "d.y"
+#line 773 "d.y"
+                                                                                         {
+										(yyval.intValue) = (yyvsp[0].intValue);
+									}
+#line 2537 "y.tab.c"
+    break;
+
+  case 75:
+#line 778 "d.y"
+                                                                                                              {
+														(yyval.node) = (yyvsp[0].node);
+													}
+#line 2545 "y.tab.c"
+    break;
+
+  case 76:
+#line 781 "d.y"
                                                                                                                      {
 														// Check if the identifier exists, and it is a constant
 														TableNode* tableNode = lookUpInEveryScope((yyvsp[0].identifierName));
@@ -2259,14 +2556,16 @@ yyreduce:
 															if (tableNode -> constant != 1) {
 																yyerror("You can only use constant expression to declare a \"var\" or \"val\".");
 															}
-															(yyval.intValue) = tableNode -> type;
+															(yyval.node) = (ParameterNode*)malloc(sizeof(ParameterNode));
+															(yyval.node) -> type = tableNode -> type;
+															(yyval.node) -> value = tableNode -> constantValue;
 														}
 													}
-#line 2266 "y.tab.c"
+#line 2565 "y.tab.c"
     break;
 
-  case 75:
-#line 531 "d.y"
+  case 77:
+#line 798 "d.y"
                                                                                                                        {
 										// Check if the identifier exists, and it's a function
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[-3].identifierName));
@@ -2309,12 +2608,13 @@ yyreduce:
 										if ((yyvsp[-1].arguments) != NULL) {
 											free((yyvsp[-1].arguments));
 										}
+										printInvocationOfFunction(tableNode -> string, tableNode -> subType, tableNode -> argumentTypes, tableNode -> argumentNum);
 									}
-#line 2314 "y.tab.c"
+#line 2614 "y.tab.c"
     break;
 
-  case 76:
-#line 574 "d.y"
+  case 78:
+#line 842 "d.y"
                                                                                              {
 										// Check if the identifier exists, and it's a function
 										TableNode* tableNode = lookUpInEveryScope((yyvsp[-2].identifierName));
@@ -2338,11 +2638,11 @@ yyreduce:
 											}
 										}
 									}
-#line 2342 "y.tab.c"
+#line 2642 "y.tab.c"
     break;
 
-  case 77:
-#line 599 "d.y"
+  case 79:
+#line 867 "d.y"
                                                                                                                                                     {
 														// Store the arguments information and return it
 														int* previousArgumentTypes = (yyvsp[-2].arguments) -> argumentTypes;
@@ -2361,11 +2661,11 @@ yyreduce:
 															free((yyvsp[-2].arguments));
 														}
 													 }
-#line 2365 "y.tab.c"
+#line 2665 "y.tab.c"
     break;
 
-  case 78:
-#line 617 "d.y"
+  case 80:
+#line 885 "d.y"
                                                                                                                       {
 														// Store the arguments information and return it
 														(yyval.arguments) = (Arguments*)malloc(sizeof(Arguments));
@@ -2373,11 +2673,11 @@ yyreduce:
 														(yyval.arguments) -> argumentTypes[0] = (yyvsp[0].intValue);
 														(yyval.arguments) -> argumentNum = 1;
 													 }
-#line 2377 "y.tab.c"
+#line 2677 "y.tab.c"
     break;
 
-  case 79:
-#line 627 "d.y"
+  case 81:
+#line 895 "d.y"
                                                                                       {
 								// Check if the identifier exists, and it's an array
 								TableNode* tableNode = lookUpInEveryScope((yyvsp[-3].identifierName));
@@ -2396,146 +2696,215 @@ yyreduce:
 									}
 								}
 							}
-#line 2400 "y.tab.c"
-    break;
-
-  case 80:
-#line 647 "d.y"
-                                                                             {
-					 	// Check if the type of expression is bool
-					 	if ((yyvsp[-2].intValue) != NODE_BOOL) {
-							yyerror("\"if\" needs a Boolean in its brackets.");
-						}
-					 }
-#line 2411 "y.tab.c"
-    break;
-
-  case 81:
-#line 653 "d.y"
-                                                                                                  {
-					 	// Check if the type of expression is bool
-					 	if ((yyvsp[-4].intValue) != NODE_BOOL) {
-							yyerror("\"if\" needs a Boolean in its brackets.");
-						}
-					 }
-#line 2422 "y.tab.c"
+#line 2700 "y.tab.c"
     break;
 
   case 82:
-#line 661 "d.y"
-                                                       {
+#line 915 "d.y"
+                                            {
+					 	printPreparationForIf();
+					 }
+#line 2708 "y.tab.c"
+    break;
+
+  case 84:
+#line 920 "d.y"
+                                                        {
+				// Check if the type of expression is bool
+				if ((yyvsp[-2].intValue) != NODE_BOOL) {
+					yyerror("\"if\" needs a Boolean in its brackets.");
+				}
+				printConditionElseFlag();
+				printConditionRestFlag();
+			}
+#line 2721 "y.tab.c"
+    break;
+
+  case 85:
+#line 928 "d.y"
+                                                          {
+				printConditionElseFlag();
+			}
+#line 2729 "y.tab.c"
+    break;
+
+  case 86:
+#line 930 "d.y"
+                                             {
+				// Check if the type of expression is bool
+				if ((yyvsp[-5].intValue) != NODE_BOOL) {
+					yyerror("\"if\" needs a Boolean in its brackets.");
+				}
+				printConditionRestFlag();
+				printNOP();
+			}
+#line 2742 "y.tab.c"
+    break;
+
+  case 87:
+#line 939 "d.y"
+                      {
+			printNOP();
+			printWhileLoopBeginFlag();
+		}
+#line 2751 "y.tab.c"
+    break;
+
+  case 88:
+#line 942 "d.y"
+                                                  {
 			// Check if the type of expression is bool
 			if ((yyvsp[-2].intValue) != NODE_BOOL) {
 				yyerror("\"while\" needs a Boolean in its brackets.");
 		 	}
+			printGotoWhileLoopBeginFlag();
+			printConditionElseFlag();
+			printConditionRestFlag();
+			printNOP();
 		}
-#line 2433 "y.tab.c"
+#line 2766 "y.tab.c"
     break;
 
-  case 83:
-#line 667 "d.y"
-                                                               {
+  case 89:
+#line 952 "d.y"
+                                     {
 			// Create a new symbol table for the identifier in the loop for
-			createNewTable();
+			createNewTable(0);
 			// Check if the identifer exists (It shouldn't exist actually, because this is a new symbol table)
-			TableNode* tableNode = lookUpInThisScope((yyvsp[-5].identifierName));
+			TableNode* tableNode = lookUpInThisScope((yyvsp[0].identifierName));
 			if (tableNode != NULL) {
-				yyerrorForIdentifierDuplicated((yyvsp[-5].identifierName));
+				yyerrorForIdentifierDuplicated((yyvsp[0].identifierName));
 			}
 			else {
-				insert((yyvsp[-5].identifierName), NODE_INT, -1, NULL, 0, 0);
+				tableNode = insert((yyvsp[0].identifierName), NODE_INT, -1, NULL, 0, 0, 0);
 			}
+			(yyval.intValue) = tableNode -> index;
 		}
-#line 2450 "y.tab.c"
+#line 2784 "y.tab.c"
     break;
 
-  case 84:
-#line 678 "d.y"
+  case 90:
+#line 964 "d.y"
                                 {
+			printBetweenForLoopStartingNumAndEndingNum((yyvsp[-2].intValue));
+		}
+#line 2792 "y.tab.c"
+    break;
+
+  case 91:
+#line 966 "d.y"
+                                {
+			printAfterForLoopStartingNumAndEndingNum((yyvsp[-5].intValue));
+		}
+#line 2800 "y.tab.c"
+    break;
+
+  case 92:
+#line 968 "d.y"
+                                    {
 			// Pop the current symbol table
 			popTable();
+			printTheEndOfTrueFlagSectionOfForLoop((yyvsp[-8].intValue));
+			printConditionElseFlag();
+			printConditionRestFlag();
+			printNOP();
 		}
-#line 2459 "y.tab.c"
+#line 2813 "y.tab.c"
     break;
 
-  case 85:
-#line 683 "d.y"
+  case 93:
+#line 976 "d.y"
                {
 							// Create a new symbol table because it has entering new scope
-						 	createNewTable();
+						 	createNewTable(0);
 						 }
-#line 2468 "y.tab.c"
+#line 2822 "y.tab.c"
     break;
 
-  case 86:
-#line 686 "d.y"
+  case 94:
+#line 979 "d.y"
                                                           {
 						 	// Pop the current symbol table because it is leaving this scope
 						 	popTable();
 						 }
-#line 2477 "y.tab.c"
+#line 2831 "y.tab.c"
     break;
 
-  case 87:
-#line 690 "d.y"
+  case 95:
+#line 983 "d.y"
                                                    {
 							// Create a new symbol table because it has entering new scope
-						 	createNewTable();
+						 	createNewTable(0);
 						 }
-#line 2486 "y.tab.c"
+#line 2840 "y.tab.c"
     break;
 
-  case 88:
-#line 693 "d.y"
+  case 96:
+#line 986 "d.y"
                                                                  {
 						 	// Pop the current symbol table because it is leaving this scope
 						 	popTable();
 						 }
-#line 2495 "y.tab.c"
+#line 2849 "y.tab.c"
     break;
 
-  case 90:
-#line 702 "d.y"
+  case 98:
+#line 994 "d.y"
+                      {
+				 	(yyval.intValue) = (yyvsp[0].intValue);
+					printCondition();
+				 }
+#line 2858 "y.tab.c"
+    break;
+
+  case 99:
+#line 999 "d.y"
                          {
 			(yyval.intValue) = (yyvsp[0].intValue);
 		}
-#line 2503 "y.tab.c"
+#line 2866 "y.tab.c"
     break;
 
-  case 91:
-#line 705 "d.y"
+  case 100:
+#line 1002 "d.y"
                   {
 			(yyval.intValue) = -1;
 		}
-#line 2511 "y.tab.c"
+#line 2874 "y.tab.c"
     break;
 
-  case 92:
-#line 710 "d.y"
-                         { (yyval.intValue) = NODE_INT; }
-#line 2517 "y.tab.c"
+  case 101:
+#line 1007 "d.y"
+                         {
+		 	(yyval.node) = (ParameterNode*)malloc(sizeof(ParameterNode));
+			(yyval.node) -> type = NODE_INT;
+			(yyval.node) -> value = (yyvsp[0].intValue);
+		 }
+#line 2884 "y.tab.c"
     break;
 
-  case 93:
-#line 711 "d.y"
-                         { (yyval.intValue) = NODE_FLOAT; }
-#line 2523 "y.tab.c"
+  case 102:
+#line 1012 "d.y"
+                           {
+		 	(yyval.node) = (ParameterNode*)malloc(sizeof(ParameterNode));
+			(yyval.node) -> type = NODE_BOOL;
+			(yyval.node) -> value = (yyvsp[0].boolValue);
+		 }
+#line 2894 "y.tab.c"
     break;
 
-  case 94:
-#line 712 "d.y"
-                           { (yyval.intValue) = NODE_BOOL; }
-#line 2529 "y.tab.c"
+  case 103:
+#line 1017 "d.y"
+                          {
+		 	(yyval.node) = (ParameterNode*)malloc(sizeof(ParameterNode));
+			(yyval.node) -> type = NODE_STRING;
+			(yyval.node) -> stringValue = (yyvsp[0].stringValue);
+		 }
+#line 2904 "y.tab.c"
     break;
 
-  case 95:
-#line 713 "d.y"
-                          { (yyval.intValue) = NODE_STRING; }
-#line 2535 "y.tab.c"
-    break;
 
-
-#line 2539 "y.tab.c"
+#line 2908 "y.tab.c"
 
       default: break;
     }
@@ -2767,25 +3136,393 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 714 "d.y"
+#line 1022 "d.y"
 
 void yyerror(char *s) {
 	fprintf(stderr, "%s (Line: %d)\n", s, lineCount);
+	yyerrorExit();
 }
 void yyerrorForIdentifierDuplicated(char* identifierName) {
 	fprintf(stderr, "Identifier \"%s\" already exists. (Line: %d)\n", identifierName, lineCount);
+	yyerrorExit();
 }
 void yyerrorForIdentifierNotFound(char* identifierName) {
 	fprintf(stderr, "Identifier \"%s\" not found. (Line: %d)\n", identifierName, lineCount);
+	yyerrorExit();
 }
 void yyerrorForIdentifierNotFunction(char* identifierName) {
 	fprintf(stderr, "Identifier \"%s\" is not a function. (Line: %d)\n", identifierName, lineCount);
+	yyerrorExit();
 }
 void yyerrorForIdentifierNotArray(char* identifierName) {
 	fprintf(stderr, "Identifier \"%s\" is not a array. (Line: %d)\n", identifierName, lineCount);
+	yyerrorExit();
+}
+void yyerrorExit() {
+	exit(-1);
+}
+void printTheStartOfClassDeclaration(char* name) {
+	fprintf(file, "class %s\n", name);
+	fprintf(file, "{\n");
+}
+void printTheEndOfClassDeclaration() {
+	fprintf(file, "}\n");
+}
+void printTheStartOfFunctionDeclaration(char* name, int type, Arguments* arguments) {
+	if (strcmp(name, "main") == 0) {
+		fprintf(file, "method public static void main(java.lang.String[])\n");
+		fprintf(file, "max_stack 15\n");
+		fprintf(file, "max_locals 15\n");
+		fprintf(file, "{\n");
+	} else {
+		fprintf(file, "method public static ");
+		if (type == NODE_INT) {
+			fprintf(file, "int ");
+		} else if (type == NODE_BOOL) {
+			fprintf(file, "boolean ");
+		} else if (type == -1) {
+			fprintf(file, "void ");
+		}
+		fprintf(file, "%s(", name);
+		if (arguments != NULL && arguments -> argumentNum > 0) {
+			// arguments -> argumentNum[0]
+			if (arguments -> argumentTypes[0] == NODE_INT) {
+				fprintf(file, "int");
+			} else if (arguments -> argumentTypes[0] == NODE_BOOL) {
+				fprintf(file, "boolean");
+			}
+			// arguments -> argumentNum[i] (i > 0)
+			for (int i = 1; i < arguments -> argumentNum; i++) {
+				if (arguments -> argumentTypes[i] == NODE_INT) {
+					fprintf(file, ", int");
+				} else if (arguments -> argumentTypes[i] == NODE_BOOL) {
+					fprintf(file, ", boolean");
+				}
+			}
+		}
+		fprintf(file, ")\n");
+		fprintf(file, "max_stack 15\n");
+		fprintf(file, "max_locals 15\n");
+		fprintf(file, "{\n");
+	}
+}
+void printTheEndOfFunctionDeclaration(int needReturn) {
+	if (needReturn > 0) {
+		fprintf(file, "return\n");
+	} else {
+		fprintf(file, "iload 0\n");
+		fprintf(file, "ireturn\n");
+	}
+	fprintf(file, "}\n");
+}
+void printZeroToInitializeIt(int type) {
+	if (type == NODE_INT) {
+		fprintf(file, "iload 0\n");
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "iconst_0\n");
+	}
+}
+void printLocalVariableDeclaration(int index) {
+	fprintf(file, "istore %d\n", index);
+}
+void printGlobalVariableDeclarationWithoutValue(char* name, int type) {
+	fprintf(file, "field static ");
+	if (type == NODE_INT) {
+		fprintf(file, "int ");
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "boolean ");
+	}
+	fprintf(file, "%s\n", name);
+}
+void printGlobalVariableDeclaration(char* name, int type, int value) {
+	fprintf(file, "field static ");
+	if (type == NODE_INT) {
+		fprintf(file, "int ");
+		fprintf(file, "%s = %d\n", name, value);
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "boolean ");
+		if (value == 0) {
+			fprintf(file, "%s = 0\n", name);
+		} else {
+			fprintf(file, "%s = 1\n", name);
+		}
+	}
+}
+void printAssignVariable(TableNode* node) {
+	if (node -> global == 1) {
+		fprintf(file, "putstatic ");
+		if (node -> type == NODE_INT) {
+			fprintf(file, "int ");
+		} else if (node -> type == NODE_BOOL) {
+			fprintf(file, "boolean ");
+		}
+		fprintf(file, "%s.%s\n", className, node -> string);
+	} else if (node -> global == 0) {
+		fprintf(file, "istore %d\n", node -> index);
+	}
+}
+void printReturnVariable() {
+	fprintf(file, "ireturn\n");
+}
+void printReturn() {
+	fprintf(file, "return\n");
+}
+void printUminus() {
+	fprintf(file, "ineg\n");
+}
+void printValue(int type, int value) {
+	if (type == NODE_INT) {
+		fprintf(file, "sipush %d\n", value);
+	} else if (type == NODE_BOOL) {
+		if (value == 0) {
+			fprintf(file, "iconst_0\n");
+		} else {
+			fprintf(file, "iconst_1\n");
+		}
+	}
+}
+void printLoadingLocalVariable(int index) {
+	fprintf(file, "iload %d\n", index);
+}
+void printLoadingGlobalVariable(char* name, int type) {
+	fprintf(file, "getstatic ");
+	if (type == NODE_INT) {
+		fprintf(file, "int ");
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "boolean ");
+	}
+	fprintf(file, "%s.%s\n", className, name);
+}
+void printOperator(int operator) {
+	if (operator >= OPERATOR_LT) {
+		fprintf(file, "isub\n");
+	}
+	switch (operator) {
+	case OPERATOR_ADD:
+		fprintf(file, "iadd\n");
+		break;
+
+	case OPERATOR_SUB:
+		fprintf(file, "isub\n");
+		break;
+
+	case OPERATOR_MUL:
+		fprintf(file, "imul\n");
+		break;
+
+	case OPERATOR_DIV:
+		fprintf(file, "idiv\n");
+		break;
+
+	case OPERATOR_REM:
+		fprintf(file, "irem\n");
+		break;
+
+	case OPERATOR_AND:
+		fprintf(file, "iand\n");
+		break;
+
+	case OPERATOR_OR:
+		fprintf(file, "ior\n");
+		break;
+
+	case OPERATOR_XOR:
+		fprintf(file, "ixor\n");
+		break;
+
+	case OPERATOR_LT:
+		fprintf(file, "iflt L%d_TRUE\n", nextConditionCounter);
+		break;
+
+	case OPERATOR_GE:
+		fprintf(file, "ifgt L%d_TRUE\n", nextConditionCounter);
+		break;
+
+	case OPERATOR_LE:
+		fprintf(file, "ifle L%d_TRUE\n", nextConditionCounter);
+		break;
+
+	case OPERATOR_EQ:
+		fprintf(file, "ifeq L%d_TRUE\n", nextConditionCounter);
+		break;
+
+	case OPERATOR_NE:
+		fprintf(file, "ifne L%d_TRUE\n", nextConditionCounter);
+		break;
+
+	case OPERATOR_GT:
+		fprintf(file, "ifgt L%d_TRUE\n", nextConditionCounter);
+		break;
+	}
+	if (operator >= OPERATOR_LT) {
+		fprintf(file, "iconst_0\n");
+		fprintf(file, "goto L%d_REST\n", nextConditionCounter);
+		fprintf(file, "L%d_TRUE:\n", nextConditionCounter);
+		fprintf(file, "iconst_1\n");
+		fprintf(file, "L%d_REST:\n", nextConditionCounter);
+		nextConditionCounter++;
+	}
+}
+void printConditionWithOperator(int operator) {
+	fprintf(file, "isub\n");
+	switch (operator) {
+	case OPERATOR_LT:
+		fprintf(file, "iflt L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+
+	case OPERATOR_GE:
+		fprintf(file, "ifge L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+
+	case OPERATOR_LE:
+		fprintf(file, "ifle L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+
+	case OPERATOR_EQ:
+		fprintf(file, "ifeq L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+
+	case OPERATOR_NE:
+		fprintf(file, "ifne L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+
+	case OPERATOR_GT:
+		fprintf(file, "ifgt L%d_TRUE\n", unfinishedConditionCounter -> index);
+		break;
+	}
+	fprintf(file, "goto L%d_FALSE\n", unfinishedConditionCounter -> index);
+	fprintf(file, "L%d_TRUE:\n", unfinishedConditionCounter -> index);
+}
+void printCondition() {
+	fprintf(file, "ifeq L%d_FALSE\n", unfinishedConditionCounter -> index);
+	fprintf(file, "goto L%d_TRUE\n", unfinishedConditionCounter -> index);
+	fprintf(file, "L%d_TRUE:\n", unfinishedConditionCounter -> index);
+}
+void printConditionElseFlag() {
+	fprintf(file, "goto L%d_REST\n", unfinishedConditionCounter -> index);
+	fprintf(file, "L%d_FALSE:\n", unfinishedConditionCounter -> index);
+}
+void printConditionRestFlag() {
+	fprintf(file, "goto L%d_REST\n", unfinishedConditionCounter -> index);
+	fprintf(file, "L%d_REST:\n", unfinishedConditionCounter -> index);
+	UnfinishedConditionCounter* finished = unfinishedConditionCounter;
+	unfinishedConditionCounter = unfinishedConditionCounter -> previous;
+	unfinishedConditionCounter -> next = NULL;
+	free(finished);
+}
+void printLoadingString(char* stringToPrint) {
+	fprintf(file, "ldc \"%s\"\n", stringToPrint);
+}
+void printPreparationForPrint() {
+	fprintf(file, "getstatic java.io.PrintStream java.lang.System.out\n");
+}
+void printPrinting(int type, int nextLine) {
+	if (nextLine == 0) {
+		fprintf(file, "invokevirtual void java.io.PrintStream.print(");
+	} else if (nextLine == 1) {
+		fprintf(file, "invokevirtual void java.io.PrintStream.println(");
+	}
+	if (type == NODE_INT) {
+		fprintf(file, "int");
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "boolean");
+	} else if (type == NODE_STRING) {
+		fprintf(file, "java.lang.String");
+	}
+	fprintf(file, ")\n");
+}
+void printWhileLoopBeginFlag() {
+	fprintf(file, "L%d_BEGIN:\n", nextConditionCounter);
+	unfinishedConditionCounter -> next = (UnfinishedConditionCounter*)malloc(sizeof(UnfinishedConditionCounter));
+	unfinishedConditionCounter -> next -> index = nextConditionCounter;
+	unfinishedConditionCounter -> next -> next = NULL;
+	unfinishedConditionCounter -> next -> previous = unfinishedConditionCounter;
+	unfinishedConditionCounter = unfinishedConditionCounter -> next;
+	nextConditionCounter++;
+}
+void printGotoWhileLoopBeginFlag() {
+	fprintf(file, "goto L%d_BEGIN\n", unfinishedConditionCounter -> index);
+}
+void printBetweenForLoopStartingNumAndEndingNum(int index) {
+	fprintf(file, "istore %d\n", index);
+	fprintf(file, "L%d_BEGIN:\n", nextConditionCounter);
+	fprintf(file, "iload %d\n", index);
+	unfinishedConditionCounter -> next = (UnfinishedConditionCounter*)malloc(sizeof(UnfinishedConditionCounter));
+	unfinishedConditionCounter -> next -> index = nextConditionCounter;
+	unfinishedConditionCounter -> next -> next = NULL;
+	unfinishedConditionCounter -> next -> previous = unfinishedConditionCounter;
+	unfinishedConditionCounter = unfinishedConditionCounter -> next;
+	nextConditionCounter++;
+}
+void printAfterForLoopStartingNumAndEndingNum(int index) {
+	printConditionWithOperator(OPERATOR_LE);
+}
+void printTheEndOfTrueFlagSectionOfForLoop(int index) {
+	fprintf(file, "sipush 1\n");
+	fprintf(file, "iload %d\n", index);
+	fprintf(file, "iadd\n");
+	fprintf(file, "istore %d\n", index);
+	fprintf(file, "goto L%d_BEGIN\n", unfinishedConditionCounter -> index);
+}
+void printInvocationOfFunction(char* name, int type, int* argumentTypes, int argumentNum) {
+	fprintf(file, "invokestatic ");
+	if (type == NODE_INT) {
+		fprintf(file, "int ");
+	} else if (type == NODE_BOOL) {
+		fprintf(file, "boolean ");
+	} else if (type == -1) {
+		fprintf(file, "void ");
+	}
+	fprintf(file, "%s.%s(", className, name);
+	if (argumentNum > 0) {
+		if (argumentTypes[0] == NODE_INT) {
+			fprintf(file, "int");
+		} else if (argumentTypes[0] == NODE_BOOL) {
+			fprintf(file, "boolean");
+		}
+		for (int i = 1; i < argumentNum; i++) {
+			if (argumentTypes[i] == NODE_INT) {
+				fprintf(file, ", int");
+			} else if (argumentTypes[i] == NODE_BOOL) {
+				fprintf(file, ", boolean");
+			}
+		}
+	}
+	fprintf(file, ")\n");
+}
+void printPreparationForIf() {
+	unfinishedConditionCounter -> next = (UnfinishedConditionCounter*)malloc(sizeof(UnfinishedConditionCounter));
+	unfinishedConditionCounter -> next -> index = nextConditionCounter;
+	unfinishedConditionCounter -> next -> next = NULL;
+	unfinishedConditionCounter -> next -> previous = unfinishedConditionCounter;
+	unfinishedConditionCounter = unfinishedConditionCounter -> next;
+	nextConditionCounter++;
+}
+void printNOP() {
+	fprintf(file, "nop\n");
+}
+void initParser() {
+	nextConditionCounter = 0;
+	unfinishedConditionCounter = (UnfinishedConditionCounter*)malloc(sizeof(UnfinishedConditionCounter));
+	unfinishedConditionCounter -> index = -1;
+	unfinishedConditionCounter -> next = NULL;
+	unfinishedConditionCounter -> previous = NULL;
+	file = fopen("temp.txt", "w");
+	if (file == NULL) {
+		fprintf(stderr, "Can't create a file to write.\n");
+		exit(-1);
+	}
+	//printf("File created.\n");
 }
 int main(void) {
 	initScanner();
+	initParser();
 	yyparse();
+	char* fileExtention = ".jasm";
+	char* filename = (char*)malloc(sizeof(char) * (strlen(className) + strlen(fileExtention) + 1));
+	filename[0] = '\0';
+	strcat(filename, className);
+	strcat(filename, fileExtention);
+	rename("temp.txt", filename);
 	return 0;
 }

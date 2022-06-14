@@ -1,0 +1,287 @@
+class Project3Example
+{
+field static int c
+method public static int add(int, int)
+max_stack 15
+max_locals 15
+{
+sipush 0
+istore 2
+iload 0
+istore 2
+sipush 1
+istore 3
+L0_BEGIN:
+iload 3
+iload 1
+isub
+ifle L0_TRUE
+goto L0_FALSE
+L0_TRUE:
+iload 2
+sipush 1
+iadd
+istore 2
+sipush 1
+iload 3
+iadd
+istore 3
+goto L0_BEGIN
+goto L0_REST
+L0_FALSE:
+goto L0_REST
+L0_REST:
+nop
+iload 2
+ireturn
+iload 0
+ireturn
+}
+method public static int middleReturn(int, int)
+max_stack 15
+max_locals 15
+{
+iload 0
+iload 1
+iadd
+ireturn
+getstatic java.io.PrintStream java.lang.System.out
+iload 0
+iload 1
+iadd
+invokevirtual void java.io.PrintStream.println(int)
+iload 0
+ireturn
+}
+method public static void noReturn(int, int)
+max_stack 15
+max_locals 15
+{
+getstatic java.io.PrintStream java.lang.System.out
+iload 0
+iload 1
+iadd
+invokevirtual void java.io.PrintStream.println(int)
+return
+}
+method public static void main(java.lang.String[])
+max_stack 15
+max_locals 15
+{
+sipush 10
+sipush 10
+invokestatic int Project3Example.middleReturn(int, int)
+istore 0
+sipush 1
+istore 1
+L1_BEGIN:
+iload 1
+sipush 5
+sipush 5
+invokestatic int Project3Example.add(int, int)
+isub
+ifle L1_TRUE
+goto L1_FALSE
+L1_TRUE:
+sipush 1
+istore 2
+L2_BEGIN:
+iload 2
+iload 1
+isub
+ifle L2_TRUE
+goto L2_FALSE
+L2_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "*"
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+sipush 1
+iload 2
+iadd
+istore 2
+goto L2_BEGIN
+goto L2_REST
+L2_FALSE:
+goto L2_REST
+L2_REST:
+nop
+getstatic java.io.PrintStream java.lang.System.out
+ldc ""
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+sipush 1
+iload 1
+iadd
+istore 1
+goto L1_BEGIN
+goto L1_REST
+L1_FALSE:
+goto L1_REST
+L1_REST:
+nop
+iconst_1
+ifeq L3_FALSE
+goto L3_TRUE
+L3_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "SUCCESS"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L3_REST
+L3_FALSE:
+goto L3_REST
+L3_REST:
+sipush 1
+istore 1
+sipush 1
+istore 2
+L4_BEGIN:
+iload 2
+sipush 5
+sipush 5
+invokestatic int Project3Example.add(int, int)
+isub
+ifle L4_TRUE
+goto L4_FALSE
+L4_TRUE:
+sipush 1
+istore 3
+L5_BEGIN:
+iload 3
+iload 2
+isub
+ifle L5_TRUE
+goto L5_FALSE
+L5_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "*"
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+sipush 1
+iload 3
+iadd
+istore 3
+goto L5_BEGIN
+goto L5_REST
+L5_FALSE:
+goto L5_REST
+L5_REST:
+nop
+getstatic java.io.PrintStream java.lang.System.out
+ldc ""
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+sipush 1
+iload 2
+iadd
+istore 2
+goto L4_BEGIN
+goto L4_REST
+L4_FALSE:
+goto L4_REST
+L4_REST:
+nop
+nop
+L6_BEGIN:
+iload 1
+sipush 5
+sipush 3
+sipush 5
+sipush 3
+isub
+invokestatic int Project3Example.add(int, int)
+invokestatic int Project3Example.add(int, int)
+isub
+ifle L7_TRUE
+iconst_0
+goto L7_REST
+L7_TRUE:
+iconst_1
+L7_REST:
+ifeq L6_FALSE
+goto L6_TRUE
+L6_TRUE:
+sipush 1
+istore 2
+nop
+L8_BEGIN:
+iload 2
+iload 1
+isub
+ifle L9_TRUE
+iconst_0
+goto L9_REST
+L9_TRUE:
+iconst_1
+L9_REST:
+ifeq L8_FALSE
+goto L8_TRUE
+L8_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "*"
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+iload 2
+sipush 1
+iadd
+istore 2
+goto L8_BEGIN
+goto L8_REST
+L8_FALSE:
+goto L8_REST
+L8_REST:
+nop
+getstatic java.io.PrintStream java.lang.System.out
+ldc ""
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+iload 1
+sipush 1
+iadd
+istore 1
+goto L6_BEGIN
+goto L6_REST
+L6_FALSE:
+goto L6_REST
+L6_REST:
+nop
+sipush 3
+sipush 5
+isub
+ifne L11_TRUE
+iconst_0
+goto L11_REST
+L11_TRUE:
+iconst_1
+L11_REST:
+ifeq L10_FALSE
+goto L10_TRUE
+L10_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "OHNO"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L10_REST
+L10_FALSE:
+goto L10_REST
+L10_REST:
+sipush 1
+sipush 2
+invokestatic void Project3Example.noReturn(int, int)
+getstatic java.io.PrintStream java.lang.System.out
+sipush 3
+sipush 5
+isub
+ifne L12_TRUE
+iconst_0
+goto L12_REST
+L12_TRUE:
+iconst_1
+L12_REST:
+sipush 1
+sipush 2
+isub
+ifeq L13_TRUE
+iconst_0
+goto L13_REST
+L13_TRUE:
+iconst_1
+L13_REST:
+iand
+invokevirtual void java.io.PrintStream.println(boolean)
+return
+}
+}

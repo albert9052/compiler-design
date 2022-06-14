@@ -1,0 +1,392 @@
+class oboe
+{
+field static int n
+field static int sum
+field static int index
+field static int xxxxx = 231
+field static boolean b = 1
+method public static int div(int, int)
+max_stack 15
+max_locals 15
+{
+iload 0
+iload 1
+isub
+ireturn
+iload 0
+ireturn
+}
+method public static int fib(int)
+max_stack 15
+max_locals 15
+{
+iload 0
+sipush 2
+isub
+iflt L1_TRUE
+iconst_0
+goto L1_REST
+L1_TRUE:
+iconst_1
+L1_REST:
+ifeq L0_FALSE
+goto L0_TRUE
+L0_TRUE:
+iload 0
+ireturn
+goto L0_REST
+L0_FALSE:
+iload 0
+sipush 1
+isub
+invokestatic int oboe.fib(int)
+iload 0
+sipush 2
+isub
+invokestatic int oboe.fib(int)
+iadd
+ireturn
+goto L0_REST
+L0_REST:
+iload 0
+ireturn
+}
+method public static int add(int, int)
+max_stack 15
+max_locals 15
+{
+iload 0
+iload 1
+iadd
+istore 2
+iload 2
+ireturn
+iload 0
+ireturn
+}
+method public static void myprint(int, boolean)
+max_stack 15
+max_locals 15
+{
+iload 0
+iload 0
+iadd
+iload 0
+imul
+istore 2
+getstatic java.io.PrintStream java.lang.System.out
+ldc "c is "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+sipush 10000
+invokevirtual void java.io.PrintStream.println(int)
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+invokevirtual void java.io.PrintStream.println(int)
+iload 1
+iconst_0
+isub
+ifeq L3_TRUE
+iconst_0
+goto L3_REST
+L3_TRUE:
+iconst_1
+L3_REST:
+ifeq L2_FALSE
+goto L2_TRUE
+L2_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "flag false"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+iload 2
+sipush 10000
+isub
+iflt L5_TRUE
+iconst_0
+goto L5_REST
+L5_TRUE:
+iconst_1
+L5_REST:
+ifeq L4_FALSE
+goto L4_TRUE
+L4_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "a is smaller than c and a is "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+invokevirtual void java.io.PrintStream.println(int)
+goto L4_REST
+L4_FALSE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "a is"
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+invokevirtual void java.io.PrintStream.println(int)
+goto L4_REST
+L4_REST:
+goto L2_REST
+L2_FALSE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "flag true"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L2_REST
+L2_REST:
+getstatic int oboe.sum
+iload 0
+invokestatic int oboe.add(int, int)
+putstatic int oboe.sum
+getstatic java.io.PrintStream java.lang.System.out
+ldc "flag compute ans "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+iconst_0
+iconst_0
+ior
+invokevirtual void java.io.PrintStream.println(boolean)
+return
+}
+method public static void main(java.lang.String[])
+max_stack 15
+max_locals 15
+{
+sipush 1
+putstatic int oboe.sum
+sipush 0
+putstatic int oboe.index
+sipush 1
+putstatic int oboe.n
+getstatic java.io.PrintStream java.lang.System.out
+sipush 33
+invokevirtual void java.io.PrintStream.print(int)
+getstatic java.io.PrintStream java.lang.System.out
+ldc "The sum is"
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.sum
+invokevirtual void java.io.PrintStream.println(int)
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.index
+invokevirtual void java.io.PrintStream.println(int)
+sipush 0
+istore 0
+iload 0
+sipush 0
+isub
+ifle L7_TRUE
+iconst_0
+goto L7_REST
+L7_TRUE:
+iconst_1
+L7_REST:
+ifeq L6_FALSE
+goto L6_TRUE
+L6_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "i <= 0"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+getstatic int oboe.sum
+sipush 0
+isub
+ifeq L9_TRUE
+iconst_0
+goto L9_REST
+L9_TRUE:
+iconst_1
+L9_REST:
+ifeq L8_FALSE
+goto L8_TRUE
+L8_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "sum=0"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L8_REST
+L8_FALSE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "sum!=0"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L8_REST
+L8_REST:
+goto L6_REST
+L6_FALSE:
+goto L6_REST
+L6_REST:
+iload 0
+sipush 0
+isub
+ifgt L11_TRUE
+iconst_0
+goto L11_REST
+L11_TRUE:
+iconst_1
+L11_REST:
+ifeq L10_FALSE
+goto L10_TRUE
+L10_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "i>=0"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L10_REST
+L10_FALSE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "i!= 1 or 0 "
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L10_REST
+L10_REST:
+sipush 10
+istore 1
+L12_BEGIN:
+iload 1
+sipush 10
+isub
+ifle L12_TRUE
+goto L12_FALSE
+L12_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.index
+invokevirtual void java.io.PrintStream.println(int)
+getstatic int oboe.index
+sipush 1
+iadd
+putstatic int oboe.index
+sipush 0
+istore 2
+L13_BEGIN:
+iload 2
+sipush 10
+isub
+ifle L13_TRUE
+goto L13_FALSE
+L13_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+invokevirtual void java.io.PrintStream.print(int)
+getstatic int oboe.index
+sipush 1
+iadd
+putstatic int oboe.index
+sipush 1
+iload 2
+iadd
+istore 2
+goto L13_BEGIN
+goto L13_REST
+L13_FALSE:
+goto L13_REST
+L13_REST:
+getstatic java.io.PrintStream java.lang.System.out
+ldc ""
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+sipush 1
+iload 1
+iadd
+istore 1
+goto L12_BEGIN
+goto L12_REST
+L12_FALSE:
+goto L12_REST
+L12_REST:
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.index
+invokevirtual void java.io.PrintStream.println(int)
+sipush 0
+istore 0
+iload 0
+istore 1
+sipush 4
+istore 1
+sipush 0
+istore 2
+L14_BEGIN:
+iload 2
+sipush 4
+isub
+ifle L14_TRUE
+goto L14_FALSE
+L14_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "i = "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+sipush 1
+invokestatic int oboe.add(int, int)
+invokevirtual void java.io.PrintStream.println(int)
+getstatic java.io.PrintStream java.lang.System.out
+iload 2
+invokestatic int oboe.fib(int)
+invokevirtual void java.io.PrintStream.println(int)
+sipush 1
+iload 2
+iadd
+istore 2
+goto L14_BEGIN
+goto L14_REST
+L14_FALSE:
+goto L14_REST
+L14_REST:
+sipush 1
+istore 1
+iload 1
+sipush 1
+isub
+ifeq L16_TRUE
+iconst_0
+goto L16_REST
+L16_TRUE:
+iconst_1
+L16_REST:
+ifeq L15_FALSE
+goto L15_TRUE
+L15_TRUE:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "end = 1"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+goto L15_REST
+L15_FALSE:
+goto L15_REST
+L15_REST:
+getstatic java.io.PrintStream java.lang.System.out
+ldc "call void"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+ldc "sum is"
+invokevirtual void java.io.PrintStream.println(java.lang.String)
+sipush 10
+iconst_0
+invokestatic void oboe.myprint(int, boolean)
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.sum
+invokevirtual void java.io.PrintStream.println(int)
+sipush 5
+putstatic int oboe.sum
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int oboe.sum
+sipush 5
+isub
+ifeq L17_TRUE
+iconst_0
+goto L17_REST
+L17_TRUE:
+iconst_1
+L17_REST:
+getstatic int oboe.sum
+sipush 3
+isub
+ifeq L18_TRUE
+iconst_0
+goto L18_REST
+L18_TRUE:
+iconst_1
+L18_REST:
+ior
+invokevirtual void java.io.PrintStream.println(boolean)
+getstatic java.io.PrintStream java.lang.System.out
+sipush 3
+sipush 2
+invokestatic int oboe.div(int, int)
+invokevirtual void java.io.PrintStream.println(int)
+return
+}
+}

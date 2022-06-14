@@ -1,0 +1,49 @@
+class Sigma
+{
+field static int sum
+field static int index
+method public static void main(java.lang.String[])
+max_stack 15
+max_locals 15
+{
+sipush 0
+putstatic int Sigma.sum
+sipush 0
+putstatic int Sigma.index
+nop
+L0_BEGIN:
+getstatic int Sigma.index
+sipush 10
+isub
+ifle L1_TRUE
+iconst_0
+goto L1_REST
+L1_TRUE:
+iconst_1
+L1_REST:
+ifeq L0_FALSE
+goto L0_TRUE
+L0_TRUE:
+getstatic int Sigma.sum
+getstatic int Sigma.index
+iadd
+putstatic int Sigma.sum
+getstatic int Sigma.index
+sipush 1
+iadd
+putstatic int Sigma.index
+goto L0_BEGIN
+goto L0_REST
+L0_FALSE:
+goto L0_REST
+L0_REST:
+nop
+getstatic java.io.PrintStream java.lang.System.out
+ldc "The sum is "
+invokevirtual void java.io.PrintStream.print(java.lang.String)
+getstatic java.io.PrintStream java.lang.System.out
+getstatic int Sigma.sum
+invokevirtual void java.io.PrintStream.println(int)
+return
+}
+}

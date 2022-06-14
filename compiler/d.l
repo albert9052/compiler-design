@@ -1,6 +1,7 @@
 %{
 #include <stdlib.h>
 #include "y.tab.h"
+//#define DEBUG
 void yyerror(char *);
 int maxTempStringLength = 10;
 int currentTempStringLength = 0;
@@ -28,6 +29,9 @@ typedef struct TN {
 	int* argumentTypes;
 	int argumentNum;
 	int constant;
+	int constantValue;
+	int global;
+	int index;
 	struct TN* next;
 } TableNode;
 
@@ -35,6 +39,8 @@ typedef struct ST {
 	TableNode** table;
 	struct ST* next;
 	struct ST* previous;
+	int globalTable;
+	int startingVariableIndex;
 } SymbolTable;
 
 SymbolTable* symbolTable;
@@ -42,13 +48,14 @@ SymbolTable* symbolTable;
 long long int hash(const char* key);
 TableNode* lookUpInThisScope(const char* key);
 TableNode* lookUpInEveryScope(const char* key);
-void insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant);
-void createNewTable();
+TableNode* insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant, int constantValue);
+void createNewTable(int globalTable);
 void popTable();
 void printOneTable();
 void printAllTables();
 
 int lineCount;
+int nextVariableIndex;
 %}
 %Start STRING_MODE COMMAND_MODE_1 COMMAND_MODE_2
 %%
@@ -56,12 +63,12 @@ int lineCount;
 														if (currentTempStringLength + 1 >= maxTempStringLength) {
 															extendTempString();
 														}
-														tempString[currentTempStringLength + 1] = '\"';
+														tempString[currentTempStringLength] = '\"';
 														currentTempStringLength++;
 													}
 <STRING_MODE>\"						{
 														BEGIN 0;
-														tempString[currentTempStringLength + 1] = '\0';
+														tempString[currentTempStringLength] = '\0';
 														yylval.stringValue = tempString;
 														return STRING; 
 													}
@@ -105,8 +112,8 @@ int lineCount;
 "fun"											{ return FUN; }
 "var"											{ return VAR; }
 "val"											{ return VAL; }
-"print"										{ return PRINT; }
 "println"									{ return PRINTLN; }
+"print"										{ return PRINT; }
 "read"										{ return READ; }
 "return"									{ return RETURN; }
 "if"											{ return IF; }
@@ -139,7 +146,7 @@ int lineCount;
 "{"												{ return *yytext; }
 "}"												{ return *yytext; }
 ".."											{ return DD; }
-[-+()=/*|&!:<>,\[\]]			{ return *yytext; }
+[-+%()=/*|&!:<>,\[\]]			{ return *yytext; }
 "<="											{ return LE; }
 ">="											{ return GE; }
 "=="											{ return EQ; }
@@ -175,9 +182,11 @@ void initScanner(void) {
 	for (int i = 0; i < TABLE_SIZE; i++) {
 		symbolTable -> table[i] = NULL;
 	}
+	symbolTable -> globalTable = 1;
 	symbolTable -> next = NULL;
 	symbolTable -> previous = NULL;
 	lineCount = 1;
+	nextVariableIndex = 0;
 }
 
 // Return 64-bit FNV-1a hash for key (NUL-terminated). See description:
@@ -260,7 +269,7 @@ TableNode* lookUpInEveryScope(const char* key) {
 	return NULL;
 }
 
-void insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant) {
+TableNode* insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant, int constantValue) {
 #ifdef DEBUG
 	printf("INSERT %s\n", key);
 #endif
@@ -277,6 +286,19 @@ void insert(const char* key, int type, int subType, int* argumentTypes, int argu
 	newNode -> type = type;
 	newNode -> subType = subType;
 	newNode -> constant = constant;
+	newNode -> constantValue = constantValue;
+	if (symbolTable -> globalTable) {
+		newNode -> global = 1;
+		newNode -> index = -1;
+	} else {
+		newNode -> global = 0;
+		if ((type == NODE_INT || type == NODE_BOOL) && constant == 0) {
+			newNode -> index = nextVariableIndex;
+			nextVariableIndex ++;
+		} else {
+			newNode -> index = -1;
+		}
+	}
 	strcat(newNode -> string, key);
 	newNode -> next = NULL;
 
@@ -293,15 +315,18 @@ void insert(const char* key, int type, int subType, int* argumentTypes, int argu
 	{
 		symbolTable -> table[foundIndex] = newNode;
 	}
+	return newNode;
 }
 
-void createNewTable() {
+void createNewTable(int globalTable) {
 	SymbolTable* newTable = (SymbolTable*)malloc(sizeof(SymbolTable));
 	newTable -> table = (TableNode**)malloc(sizeof(TableNode*) * TABLE_SIZE);
 	for (int i = 0; i < TABLE_SIZE; i++)
 	{
 		newTable -> table[i] = NULL;
 	}
+	newTable -> globalTable = globalTable;
+	newTable -> startingVariableIndex = nextVariableIndex;
 	newTable -> next = NULL;
 	symbolTable -> next = newTable;
 	newTable -> previous = symbolTable;
@@ -309,6 +334,7 @@ void createNewTable() {
 }
 
 void popTable() {
+	nextVariableIndex = symbolTable -> startingVariableIndex;
 	SymbolTable* poppedTable = symbolTable;
 	symbolTable = symbolTable -> previous;
 	for (int i = 0; i < TABLE_SIZE; i++) {
@@ -330,7 +356,7 @@ void printOneTable(SymbolTable* symbolTable) {
 		if (table[i] != NULL) {
 			TableNode* currentNode = table[i];
 			while(currentNode != NULL) {
-				printf("%s\n", currentNode -> string);
+				printf("%s\t\t\t%d\n", currentNode -> string, currentNode -> index);
 				currentNode = currentNode -> next;
 			}
 		}

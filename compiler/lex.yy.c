@@ -400,13 +400,13 @@ static const flex_int16_t yy_accept[415] =
         3,    4,    4,    4,    4,    4,    4,    4,    4,    4,
         4,    4,    4,    6,    6,    6,    6,    6,    6,    6,
         6,    6,    6,    6,    6,   36,    9,   32,   24,   36,
-       13,   36,   36,   20,    3,    3,    3,    3,    3,    3,
+       14,   36,   36,   20,    3,    3,    3,    3,    3,    3,
         3,    3,    3,    4,    4,    4,    4,    4,    4,    4,
         4,    4,    6,    6,    6,    6,    6,    6,    6,    6,
         6,   36,   36,   36,   16,   27,    3,    3,    3,    3,
         3,    4,    4,    4,    4,    4,    6,    6,    6,    6,
 
-        6,   26,   23,   14,    3,    3,    3,    4,    4,    4,
+        6,   26,   23,   13,    3,    3,    3,    4,    4,    4,
         6,    6,    6,    0
     } ;
 
@@ -415,7 +415,7 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    4,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    2,    5,    6,    1,    1,    1,    7,    1,    7,
+        1,    2,    5,    6,    1,    1,    7,    7,    1,    7,
         7,    8,    7,    7,    7,    9,   10,   11,   12,   12,
        12,   12,   12,   12,   12,   12,   12,    7,    1,   13,
        14,   15,    1,    1,   16,   16,   16,   16,   16,   16,
@@ -758,6 +758,7 @@ char *yytext;
 #line 2 "d.l"
 #include <stdlib.h>
 #include "y.tab.h"
+//#define DEBUG
 void yyerror(char *);
 int maxTempStringLength = 10;
 int currentTempStringLength = 0;
@@ -785,6 +786,9 @@ typedef struct TN {
 	int* argumentTypes;
 	int argumentNum;
 	int constant;
+	int constantValue;
+	int global;
+	int index;
 	struct TN* next;
 } TableNode;
 
@@ -792,6 +796,8 @@ typedef struct ST {
 	TableNode** table;
 	struct ST* next;
 	struct ST* previous;
+	int globalTable;
+	int startingVariableIndex;
 } SymbolTable;
 
 SymbolTable* symbolTable;
@@ -799,16 +805,17 @@ SymbolTable* symbolTable;
 long long int hash(const char* key);
 TableNode* lookUpInThisScope(const char* key);
 TableNode* lookUpInEveryScope(const char* key);
-void insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant);
-void createNewTable();
+TableNode* insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant, int constantValue);
+void createNewTable(int globalTable);
 void popTable();
 void printOneTable();
 void printAllTables();
 
 int lineCount;
-#line 810 "lex.yy.c"
+int nextVariableIndex;
+#line 817 "lex.yy.c"
 
-#line 812 "lex.yy.c"
+#line 819 "lex.yy.c"
 
 #define INITIAL 0
 #define STRING_MODE 1
@@ -1028,9 +1035,9 @@ YY_DECL
 		}
 
 	{
-#line 54 "d.l"
+#line 61 "d.l"
 
-#line 1034 "lex.yy.c"
+#line 1041 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1089,21 +1096,21 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 55 "d.l"
+#line 62 "d.l"
 {
 														if (currentTempStringLength + 1 >= maxTempStringLength) {
 															extendTempString();
 														}
-														tempString[currentTempStringLength + 1] = '\"';
+														tempString[currentTempStringLength] = '\"';
 														currentTempStringLength++;
 													}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 62 "d.l"
+#line 69 "d.l"
 {
 														BEGIN 0;
-														tempString[currentTempStringLength + 1] = '\0';
+														tempString[currentTempStringLength] = '\0';
 														yylval.stringValue = tempString;
 														return STRING; 
 													}
@@ -1111,7 +1118,7 @@ YY_RULE_SETUP
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 68 "d.l"
+#line 75 "d.l"
 {
 														int yytextLength = strlen(yytext);
 														while (currentTempStringLength + yytextLength >= maxTempStringLength) {
@@ -1139,19 +1146,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 92 "d.l"
+#line 99 "d.l"
 ;
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 93 "d.l"
+#line 100 "d.l"
 { BEGIN 0; lineCount++; }
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 94 "d.l"
+#line 101 "d.l"
 {
 														// Check how many lines does it have
 														for (int i = 0; i < strlen(yytext); i++) {
@@ -1163,146 +1170,146 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 102 "d.l"
+#line 109 "d.l"
 ;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 103 "d.l"
+#line 110 "d.l"
 { BEGIN 0; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 104 "d.l"
+#line 111 "d.l"
 { return CLASS; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 105 "d.l"
+#line 112 "d.l"
 { return FUN; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 106 "d.l"
+#line 113 "d.l"
 { return VAR; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 107 "d.l"
+#line 114 "d.l"
 { return VAL; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 108 "d.l"
-{ return PRINT; }
+#line 115 "d.l"
+{ return PRINTLN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 109 "d.l"
-{ return PRINTLN; }
+#line 116 "d.l"
+{ return PRINT; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 110 "d.l"
+#line 117 "d.l"
 { return READ; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 111 "d.l"
+#line 118 "d.l"
 { return RETURN; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 112 "d.l"
+#line 119 "d.l"
 { return IF; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 113 "d.l"
+#line 120 "d.l"
 { return ELSE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 114 "d.l"
+#line 121 "d.l"
 { return FOR; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 115 "d.l"
+#line 122 "d.l"
 { return WHILE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 116 "d.l"
+#line 123 "d.l"
 { return IN; }
 	YY_BREAK
 case 22:
-#line 118 "d.l"
+#line 125 "d.l"
 case 23:
 YY_RULE_SETUP
-#line 118 "d.l"
+#line 125 "d.l"
 { yylval.type = NODE_INT; return TYPE; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 119 "d.l"
+#line 126 "d.l"
 { yylval.type = NODE_FLOAT; return TYPE; }
 	YY_BREAK
 case 25:
-#line 121 "d.l"
+#line 128 "d.l"
 case 26:
 YY_RULE_SETUP
-#line 121 "d.l"
+#line 128 "d.l"
 { yylval.type = NODE_BOOL; return TYPE; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 122 "d.l"
+#line 129 "d.l"
 { yylval.type = NODE_STRING; return TYPE; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 123 "d.l"
+#line 130 "d.l"
 { yylval.intValue = atoi(yytext); return INTEGER; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 124 "d.l"
+#line 131 "d.l"
 { yylval.intValue = atoi(yytext); return INTEGER; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 125 "d.l"
+#line 132 "d.l"
 { yylval.floatValue = atof(yytext); return FLOAT; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 126 "d.l"
+#line 133 "d.l"
 { yylval.boolValue = 1; return BOOLEAN; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 127 "d.l"
+#line 134 "d.l"
 { yylval.boolValue = 0; return BOOLEAN; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 128 "d.l"
+#line 135 "d.l"
 { BEGIN STRING_MODE; initTempString(); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 129 "d.l"
+#line 136 "d.l"
 { BEGIN COMMAND_MODE_1; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 130 "d.l"
+#line 137 "d.l"
 { BEGIN COMMAND_MODE_2; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 131 "d.l"
+#line 138 "d.l"
 { 
 														yylval.identifierName = (char*)malloc(sizeof(char) * (strlen(yytext) + 1)); 
 														for (int i = 0; i < strlen(yytext); i++) {
@@ -1314,74 +1321,74 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 139 "d.l"
+#line 146 "d.l"
 { return *yytext; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 140 "d.l"
+#line 147 "d.l"
 { return *yytext; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 141 "d.l"
+#line 148 "d.l"
 { return DD; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 142 "d.l"
+#line 149 "d.l"
 { return *yytext; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 143 "d.l"
+#line 150 "d.l"
 { return LE; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 144 "d.l"
+#line 151 "d.l"
 { return GE; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 145 "d.l"
+#line 152 "d.l"
 { return EQ; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 146 "d.l"
+#line 153 "d.l"
 { return NE; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 147 "d.l"
+#line 154 "d.l"
 ;
 	YY_BREAK
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 148 "d.l"
+#line 155 "d.l"
 { lineCount++; }
 	YY_BREAK
 case 47:
 /* rule 47 can match eol */
 YY_RULE_SETUP
-#line 149 "d.l"
+#line 156 "d.l"
 { lineCount++; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 150 "d.l"
+#line 157 "d.l"
 {
 														yyerror("invalid character");
 													}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 153 "d.l"
+#line 160 "d.l"
 ECHO;
 	YY_BREAK
-#line 1385 "lex.yy.c"
+#line 1392 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STRING_MODE):
 case YY_STATE_EOF(COMMAND_MODE_1):
@@ -2389,7 +2396,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 153 "d.l"
+#line 160 "d.l"
 
 void initTempString(void) {
 	currentTempStringLength = 0;
@@ -2415,9 +2422,11 @@ void initScanner(void) {
 	for (int i = 0; i < TABLE_SIZE; i++) {
 		symbolTable -> table[i] = NULL;
 	}
+	symbolTable -> globalTable = 1;
 	symbolTable -> next = NULL;
 	symbolTable -> previous = NULL;
 	lineCount = 1;
+	nextVariableIndex = 0;
 }
 
 // Return 64-bit FNV-1a hash for key (NUL-terminated). See description:
@@ -2500,7 +2509,7 @@ TableNode* lookUpInEveryScope(const char* key) {
 	return NULL;
 }
 
-void insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant) {
+TableNode* insert(const char* key, int type, int subType, int* argumentTypes, int argumentNum, int constant, int constantValue) {
 #ifdef DEBUG
 	printf("INSERT %s\n", key);
 #endif
@@ -2517,6 +2526,19 @@ void insert(const char* key, int type, int subType, int* argumentTypes, int argu
 	newNode -> type = type;
 	newNode -> subType = subType;
 	newNode -> constant = constant;
+	newNode -> constantValue = constantValue;
+	if (symbolTable -> globalTable) {
+		newNode -> global = 1;
+		newNode -> index = -1;
+	} else {
+		newNode -> global = 0;
+		if ((type == NODE_INT || type == NODE_BOOL) && constant == 0) {
+			newNode -> index = nextVariableIndex;
+			nextVariableIndex ++;
+		} else {
+			newNode -> index = -1;
+		}
+	}
 	strcat(newNode -> string, key);
 	newNode -> next = NULL;
 
@@ -2533,15 +2555,18 @@ void insert(const char* key, int type, int subType, int* argumentTypes, int argu
 	{
 		symbolTable -> table[foundIndex] = newNode;
 	}
+	return newNode;
 }
 
-void createNewTable() {
+void createNewTable(int globalTable) {
 	SymbolTable* newTable = (SymbolTable*)malloc(sizeof(SymbolTable));
 	newTable -> table = (TableNode**)malloc(sizeof(TableNode*) * TABLE_SIZE);
 	for (int i = 0; i < TABLE_SIZE; i++)
 	{
 		newTable -> table[i] = NULL;
 	}
+	newTable -> globalTable = globalTable;
+	newTable -> startingVariableIndex = nextVariableIndex;
 	newTable -> next = NULL;
 	symbolTable -> next = newTable;
 	newTable -> previous = symbolTable;
@@ -2549,6 +2574,7 @@ void createNewTable() {
 }
 
 void popTable() {
+	nextVariableIndex = symbolTable -> startingVariableIndex;
 	SymbolTable* poppedTable = symbolTable;
 	symbolTable = symbolTable -> previous;
 	for (int i = 0; i < TABLE_SIZE; i++) {
@@ -2570,7 +2596,7 @@ void printOneTable(SymbolTable* symbolTable) {
 		if (table[i] != NULL) {
 			TableNode* currentNode = table[i];
 			while(currentNode != NULL) {
-				printf("%s\n", currentNode -> string);
+				printf("%s\t\t\t%d\n", currentNode -> string, currentNode -> index);
 				currentNode = currentNode -> next;
 			}
 		}
