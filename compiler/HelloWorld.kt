@@ -1,7 +1,14 @@
 /* Hello World Example */
 class HelloWorld {
+	fun add () {
+		return
+	}
 	fun main () {
-		// Print text to the console
-		print ("Hello World")
+		{
+			var a = 10
+			var b
+			b = a + 5
+			print ("Hello World")
+		}
 	}
 }

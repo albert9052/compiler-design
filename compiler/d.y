@@ -520,6 +520,7 @@ statement:
 				 | conditional
 				 | loop
 				 | procedureInvocation
+				 | '{' block '}'
 				 ;
 simple:
 			IDENTIFIER '=' expression {
